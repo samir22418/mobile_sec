@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AEGIS — Android Enterprise Security Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c10;
+    --surface: #0d1117;
+    --surface2: #131a22;
+    --border: #1e2a38;
+    --accent: #00e5ff;
+    --accent2: #ff4d6d;
+    --accent3: #7fff6e;
+    --accent4: #ffd166;
+    --text: #e8edf2;
+    --text-dim: #6a7d90;
+    --text-mid: #9ab0c5;
+    --glow: 0 0 20px rgba(0,229,255,0.15);
+    --glow-red: 0 0 20px rgba(255,77,109,0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.6;
+    font-size: 13px;
+    overflow-x: hidden;
+  }
+
+  /* ── GRID BACKGROUND ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 60px 40px; }
+
+  /* ── HEADER ── */
+  .header { border-bottom: 1px solid var(--border); padding-bottom: 48px; margin-bottom: 64px; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid var(--accent); color: var(--accent);
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    padding: 6px 14px; margin-bottom: 28px;
+  }
+
+  .badge::before { content: '◆'; font-size: 7px; }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(42px, 6vw, 72px);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -2px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    color: var(--text-dim);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  .meta-row { display: flex; gap: 32px; flex-wrap: wrap; }
+  .meta-item { display: flex; flex-direction: column; gap: 4px; }
+  .meta-label { font-size: 9px; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; }
+  .meta-val { font-size: 12px; color: var(--accent); }
+
+  /* ── SECTION TITLES ── */
+  .section { margin-bottom: 64px; }
+
+  .section-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 32px; padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px; font-weight: 700;
+    color: var(--text-dim); letter-spacing: 2px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 700;
+    color: var(--text);
+  }
+
+  /* ── THREAT MODEL GRID ── */
+  .threat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+
+  .threat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    transition: border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .threat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent2);
+  }
+
+  .threat-card:nth-child(2)::before { background: var(--accent); }
+  .threat-card:nth-child(3)::before { background: var(--accent4); }
+  .threat-card:nth-child(4)::before { background: var(--accent3); }
+  .threat-card:nth-child(5)::before { background: #a78bfa; }
+  .threat-card:nth-child(6)::before { background: var(--accent2); }
+
+  .threat-card:hover { border-color: var(--accent); box-shadow: var(--glow); }
+
+  .threat-icon { font-size: 20px; margin-bottom: 12px; }
+  .threat-name { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .threat-desc { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+
+  /* ── ARCHITECTURE DIAGRAM ── */
+  .arch-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 40px;
+    margin-bottom: 48px;
+  }
+
+  .arch-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px; letter-spacing: 3px;
+    color: var(--text-dim); text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  .arch-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    align-items: center;
+  }
+
+  .arch-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .arch-node {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 14px 20px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-mid);
+    text-align: center;
+    white-space: nowrap;
+    position: relative;
+    flex: 1;
+    min-width: 120px;
+    max-width: 200px;
+  }
+
+  .arch-node.highlight {
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: var(--glow);
+  }
+
+  .arch-node.warn {
+    border-color: var(--accent2);
+    color: var(--accent2);
+    box-shadow: var(--glow-red);
+  }
+
+  .arch-node.success {
+    border-color: var(--accent3);
+    color: var(--accent3);
+  }
+
+  .arch-node.gold {
+    border-color: var(--accent4);
+    color: var(--accent4);
+  }
+
+  .arch-node .node-label {
+    font-size: 9px; letter-spacing: 1px; color: var(--text-dim);
+    display: block; margin-bottom: 4px; text-transform: uppercase;
+  }
+
+  .arch-node .node-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px; font-weight: 700;
+  }
+
+  .arch-arrow {
+    color: var(--text-dim);
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .arch-divider {
+    width: 1px;
+    height: 32px;
+    background: linear-gradient(to bottom, var(--border), transparent);
+    margin: 0 auto;
+  }
+
+  .arch-branches {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    width: 100%;
+  }
+
+  /* ── COMPONENT CARDS ── */
+  .component-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+
+  .component-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px;
+  }
+
+  .comp-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .comp-icon-wrap {
+    width: 44px; height: 44px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+
+  .comp-tag {
+    font-size: 9px; letter-spacing: 2px;
+    padding: 4px 10px; border: 1px solid;
+    text-transform: uppercase;
+  }
+
+  .comp-tag.cyan { border-color: var(--accent); color: var(--accent); }
+  .comp-tag.red { border-color: var(--accent2); color: var(--accent2); }
+  .comp-tag.green { border-color: var(--accent3); color: var(--accent3); }
+  .comp-tag.gold { border-color: var(--accent4); color: var(--accent4); }
+  .comp-tag.purple { border-color: #a78bfa; color: #a78bfa; }
+
+  .comp-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px; font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .comp-sub {
+    font-size: 11px; color: var(--text-dim); margin-bottom: 16px;
+  }
+
+  .comp-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .comp-list li {
+    font-size: 11px; color: var(--text-mid);
+    padding-left: 16px; position: relative;
+  }
+  .comp-list li::before {
+    content: '▸';
+    position: absolute; left: 0;
+    color: var(--accent); font-size: 9px;
+  }
+
+  /* ── RISK SCORING ── */
+  .risk-formula {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .formula-label { font-size: 9px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 12px; text-transform: uppercase; }
+
+  .formula-main {
+    font-size: 18px; color: var(--accent);
+    font-weight: 500; margin-bottom: 12px;
+  }
+
+  .formula-breakdown {
+    font-size: 11px; color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    padding-top: 12px; margin-top: 12px;
+    display: flex; flex-wrap: wrap; gap: 24px;
+  }
+
+  .formula-var { display: flex; flex-direction: column; gap: 3px; }
+  .var-name { color: var(--text-mid); }
+  .var-desc { color: var(--text-dim); font-size: 10px; }
+
+  /* ── SEVERITY MATRIX ── */
+  .sev-row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+
+  .sev-card {
+    flex: 1; min-width: 140px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px 20px;
+  }
+
+  .sev-bar {
+    height: 3px; margin-bottom: 12px;
+    border-radius: 1px;
+  }
+
+  .sev-score { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .sev-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; }
+  .sev-action { font-size: 10px; color: var(--text-dim); }
+
+  /* ── TIMELINE FLOW ── */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+
+  .tl-item {
+    display: flex; gap: 24px;
+    position: relative;
+  }
+
+  .tl-left {
+    display: flex; flex-direction: column; align-items: center;
+    flex-shrink: 0; width: 40px;
+  }
+
+  .tl-dot {
+    width: 12px; height: 12px;
+    border: 2px solid var(--accent);
+    background: var(--bg);
+    flex-shrink: 0;
+    position: relative; z-index: 1;
+  }
+
+  .tl-line {
+    width: 1px; flex: 1;
+    background: var(--border);
+    min-height: 32px;
+  }
+
+  .tl-content {
+    padding: 0 0 32px 0;
+    flex: 1;
+  }
+
+  .tl-step { font-size: 9px; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; }
+  .tl-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .tl-desc { font-size: 11px; color: var(--text-dim); margin-bottom: 12px; line-height: 1.6; }
+
+  .tl-tech { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tech-pill {
+    font-size: 9px; padding: 3px 10px; letter-spacing: 1px;
+    border: 1px solid var(--border); color: var(--text-dim);
+  }
+
+  /* ── CODE BLOCK ── */
+  .code-block {
+    background: #060a0d;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent3);
+    padding: 20px 24px;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+
+  .code-block pre {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-mid);
+    line-height: 1.7;
+    white-space: pre;
+  }
+
+  .code-block .kw { color: var(--accent2); }
+  .code-block .cm { color: var(--text-dim); }
+  .code-block .st { color: var(--accent3); }
+  .code-block .nm { color: var(--accent); }
+  .code-block .fn { color: var(--accent4); }
+
+  /* ── INTEGRATION TABLE ── */
+  .int-table { width: 100%; border-collapse: collapse; }
+  .int-table th {
+    text-align: left; font-size: 9px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--text-dim);
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    font-weight: 400;
+  }
+  .int-table td {
+    padding: 14px 16px; font-size: 11px;
+    border-bottom: 1px solid #0e1620; color: var(--text-mid);
+    vertical-align: top;
+  }
+  .int-table tr:hover td { background: var(--surface); }
+  .int-badge {
+    display: inline-block; font-size: 9px; padding: 2px 8px;
+    border: 1px solid var(--border); color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+  .int-badge.active { border-color: var(--accent3); color: var(--accent3); }
+  .int-badge.beta { border-color: var(--accent4); color: var(--accent4); }
+
+  /* ── FEATURE CARDS (DIFFERENTIATORS) ── */
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card::after {
+    content: '';
+    position: absolute; bottom: -20px; right: -20px;
+    width: 80px; height: 80px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    opacity: 0.4;
+  }
+
+  .feat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 42px; font-weight: 800;
+    color: var(--border); line-height: 1;
+    margin-bottom: 16px;
+  }
+
+  .feat-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .feat-desc { font-size: 11px; color: var(--text-dim); line-height: 1.6; }
+
+  /* ── FOOTER ── */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding-top: 32px; margin-top: 80px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 16px;
+  }
+
+  .footer-brand { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; }
+  .footer-brand span { color: var(--accent); }
+  .footer-meta { font-size: 10px; color: var(--text-dim); letter-spacing: 1px; }
+
+  /* ── DIVIDER ── */
+  hr.rule { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent4);
+    padding: 20px 24px;
+    margin: 24px 0;
+    font-size: 12px;
+    color: var(--text-mid);
+    line-height: 1.7;
+  }
+  .callout strong { color: var(--accent4); }
+
+  /* ── HOVER ANIMATIONS ── */
+  .threat-card, .component-card, .feature-card, .sev-card {
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  }
+  .threat-card:hover, .component-card:hover { transform: translateY(-2px); }
+  .feature-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ═══════════════════════════════════════
+       HEADER
+  ═══════════════════════════════════════ -->
+  <header class="header">
+    <div class="badge">Enterprise Security Platform</div>
+    <h1>AEGIS<span>.</span></h1>
+    <p class="subtitle">Android Enterprise Guard &amp; Intelligence Security</p>
+    <div class="meta-row">
+      <div class="meta-item"><span class="meta-label">Version</span><span class="meta-val">2.0 — Architecture Reference</span></div>
+      <div class="meta-item"><span class="meta-label">Scope</span><span class="meta-val">EDR · Static Analysis · Dynamic Sandbox · SOC</span></div>
+      <div class="meta-item"><span class="meta-label">Scale</span><span class="meta-val">1,000 – 10,000 Devices</span></div>
+      <div class="meta-item"><span class="meta-label">Classification</span><span class="meta-val">Internal / Confidential</span></div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════
+       01 — THREAT MODEL
+  ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2 class="section-title">Threat Model</h2>
+    </div>
+
+    <div class="threat-grid">
+      <div class="threat-card">
+        <div class="threat-icon">☠️</div>
+        <div class="threat-name">Malicious / Trojanized Apps</div>
+        <div class="threat-desc">APKs embedding hidden payloads, RATs, or credential harvesters delivered via sideloading or compromised stores.</div>
+      </div>
+      <div class="threat-card">
+        <div class="threat-icon">📡</div>
+        <div class="threat-name">Data Exfiltration</div>
+        <div class="threat-desc">Unauthorized transmission of tokens, credentials, and PII to C2 endpoints via covert channels.</div>
+      </div>
+      <div class="threat-card">
+        <div class="threat-icon">🎭</div>
+        <div class="threat-name">Overlay / Phishing</div>
+        <div class="threat-desc">UI overlay attacks that intercept credentials via fake login screens drawn over legitimate apps.</div>
+      </div>
+      <div class="threat-card">
+        <div class="threat-icon">🔓</div>
+        <div class="threat-name">Rooted / Compromised Devices</div>
+        <div class="threat-desc">Root access bypasses Android security boundaries, enabling full memory reads and certificate pinning defeat.</div>
+      </div>
+      <div class="threat-card">
+        <div class="threat-icon">👁️</div>
+        <div class="threat-name">Permission Abuse</div>
+        <div class="threat-desc">Legitimate permissions (camera, mic, location) exploited at runtime beyond declared scope.</div>
+      </div>
+      <div class="threat-card">
+        <div class="threat-icon">🔑</div>
+        <div class="threat-name">Hardcoded Secrets</div>
+        <div class="threat-desc">API keys, tokens, and credentials embedded in APK resources or compiled bytecode.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       02 — HIGH-LEVEL ARCHITECTURE
+  ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2 class="section-title">System Architecture</h2>
+    </div>
+
+    <div class="arch-diagram">
+      <div class="arch-title">// Data flow — device to response</div>
+      <div class="arch-flow">
+
+        <!-- Row 1: Device Layer -->
+        <div class="arch-row">
+          <div class="arch-node highlight" style="max-width:320px">
+            <span class="node-label">Device Layer</span>
+            <span class="node-name">Android Agent (Kotlin EDR)</span>
+          </div>
+        </div>
+        <div class="arch-divider"></div>
+
+        <!-- Row 2: Ingestion -->
+        <div class="arch-row">
+          <div class="arch-node" style="max-width:320px">
+            <span class="node-label">Ingestion</span>
+            <span class="node-name">mTLS Gateway / FastAPI</span>
+          </div>
+        </div>
+        <div class="arch-divider"></div>
+
+        <!-- Row 3: Message Bus -->
+        <div class="arch-row">
+          <div class="arch-node gold" style="max-width:320px">
+            <span class="node-label">Transport</span>
+            <span class="node-name">Kafka Message Bus</span>
+          </div>
+        </div>
+        <div class="arch-divider"></div>
+
+        <!-- Row 4: Three engines -->
+        <div class="arch-branches">
+          <div class="arch-node">
+            <span class="node-label">Engine A</span>
+            <span class="node-name">Static Analyzer</span>
+          </div>
+          <div class="arch-node warn">
+            <span class="node-label">Engine B</span>
+            <span class="node-name">Dynamic Sandbox</span>
+          </div>
+          <div class="arch-node success">
+            <span class="node-label">Engine C</span>
+            <span class="node-name">Risk Scorer</span>
+          </div>
+        </div>
+        <div class="arch-divider"></div>
+
+        <!-- Row 5: Storage -->
+        <div class="arch-branches" style="grid-template-columns: repeat(3,1fr)">
+          <div class="arch-node">
+            <span class="node-label">Metadata</span>
+            <span class="node-name">PostgreSQL</span>
+          </div>
+          <div class="arch-node">
+            <span class="node-label">Artifacts</span>
+            <span class="node-name">S3 / Object Store</span>
+          </div>
+          <div class="arch-node">
+            <span class="node-label">Logs</span>
+            <span class="node-name">Elasticsearch</span>
+          </div>
+        </div>
+        <div class="arch-divider"></div>
+
+        <!-- Row 6: Output -->
+        <div class="arch-branches" style="grid-template-columns: 1fr 1fr">
+          <div class="arch-node highlight">
+            <span class="node-label">Frontend</span>
+            <span class="node-name">SOC Dashboard</span>
+          </div>
+          <div class="arch-node warn">
+            <span class="node-label">Enforcement</span>
+            <span class="node-name">Response Engine / MDM</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       03 — COMPONENTS
+  ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">Core Components</h2>
+    </div>
+
+    <div class="component-grid">
+
+      <div class="component-card">
+        <div class="comp-header">
+          <div class="comp-icon-wrap">🤖</div>
+          <span class="comp-tag cyan">Kotlin · On-Device</span>
+        </div>
+        <div class="comp-title">Android Agent (EDR)</div>
+        <div class="comp-sub">Lightweight endpoint detection agent running in the work profile. Collects security telemetry, not content.</div>
+        <ul class="comp-list">
+          <li>Device integrity via Play Integrity API</li>
+          <li>Root / bootloader detection</li>
+          <li>APK hash + permission diffing on install events</li>
+          <li>Behavior monitor: app launches, permission spikes</li>
+          <li>Local risk pre-scoring — sends deltas only</li>
+          <li>Certificate pinning for all upstream comms</li>
+        </ul>
+      </div>
+
+      <div class="component-card">
+        <div class="comp-header">
+          <div class="comp-icon-wrap">🚪</div>
+          <span class="comp-tag cyan">FastAPI · mTLS</span>
+        </div>
+        <div class="comp-title">Ingestion Gateway</div>
+        <div class="comp-sub">Authenticated, rate-limited entry point for all device telemetry and APK submissions.</div>
+        <ul class="comp-list">
+          <li>Mutual TLS device authentication (cert-based)</li>
+          <li>Per-device rate limiting</li>
+          <li>Payload schema validation (Pydantic)</li>
+          <li>APK upload endpoint with chunked transfer</li>
+          <li>Publishes validated events to Kafka topics</li>
+        </ul>
+      </div>
+
+      <div class="component-card">
+        <div class="comp-header">
+          <div class="comp-icon-wrap">🔬</div>
+          <span class="comp-tag gold">Python · MobSF · jadx</span>
+        </div>
+        <div class="comp-title">Static Analysis Engine</div>
+        <div class="comp-sub">Decompiles and inspects APK bytecode, resources, and manifest without execution.</div>
+        <ul class="comp-list">
+          <li>APK unpack via apktool + jadx decompilation</li>
+          <li>Secret detection (regex + entropy analysis)</li>
+          <li>Dangerous API pattern matching</li>
+          <li>Obfuscation detection heuristics</li>
+          <li>3rd-party tracker SDK fingerprinting</li>
+          <li>Manifest permission abuse scoring</li>
+          <li>Certificate / signature validation</li>
+        </ul>
+      </div>
+
+      <div class="component-card">
+        <div class="comp-header">
+          <div class="comp-icon-wrap">💉</div>
+          <span class="comp-tag red">Frida · Android Emulator</span>
+        </div>
+        <div class="comp-title">Dynamic Sandbox</div>
+        <div class="comp-sub">Executes APKs in an instrumented emulator and captures runtime behavior for fingerprinting.</div>
+        <ul class="comp-list">
+          <li>Emulator-based isolated execution</li>
+          <li>Frida hook injection for API interception</li>
+          <li>Network endpoint capture (C2 detection)</li>
+          <li>File system access tracing</li>
+          <li>Crypto primitive usage logging</li>
+          <li>Behavior fingerprint generation (hash)</li>
+          <li>Anti-analysis evasion detection</li>
+        </ul>
+      </div>
+
+      <div class="component-card">
+        <div class="comp-header">
+          <div class="comp-icon-wrap">🧠</div>
+          <span class="comp-tag green">Python · ML Pipeline</span>
+        </div>
+        <div class="comp-title">Risk Engine</div>
+        <div class="comp-sub">Aggregates signals from all engines and produces a unified risk score per device and app.</div>
+        <ul class="comp-list">
+          <li>Weighted multi-signal aggregation</li>
+          <li>Device risk + App risk + Behavior anomaly</li>
+          <li>Threat intel enrichment (VirusTotal, OTX)</li>
+          <li>Time-series anomaly detection</li>
+          <li>Severity classification: Low → Critical</li>
+          <li>Alert deduplication and suppression</li>
+        </ul>
+      </div>
+
+      <div class="component-card">
+        <div class="comp-header">
+          <div class="comp-icon-wrap">🤖</div>
+          <span class="comp-tag purple">LLM · Claude / GPT-4</span>
+        </div>
+        <div class="comp-title">AI Analyst Layer</div>
+        <div class="comp-sub">LLM-powered module that translates raw analysis results into human-readable threat reports.</div>
+        <ul class="comp-list">
+          <li>Natural-language threat explanation</li>
+          <li>Automated executive summary generation</li>
+          <li>Remediation recommendation engine</li>
+          <li>APK analysis narrative from static output</li>
+          <li>SOC triage assistance via chat interface</li>
+        </ul>
+      </div>
+
+      <div class="component-card">
+        <div class="comp-header">
+          <div class="comp-icon-wrap">🖥️</div>
+          <span class="comp-tag cyan">React · Next.js</span>
+        </div>
+        <div class="comp-title">SOC Dashboard</div>
+        <div class="comp-sub">Real-time analyst interface for device fleet visibility, alert management, and investigation.</div>
+        <ul class="comp-list">
+          <li>Device fleet risk heatmap</li>
+          <li>App reputation database with history</li>
+          <li>Alert timeline with drill-down</li>
+          <li>Attack path visualization per incident</li>
+          <li>One-click MDM response actions</li>
+          <li>Analyst investigation workspace</li>
+        </ul>
+      </div>
+
+      <div class="component-card">
+        <div class="comp-header">
+          <div class="comp-icon-wrap">⚡</div>
+          <span class="comp-tag red">MDM · Intune · SIEM</span>
+        </div>
+        <div class="comp-title">Response Engine</div>
+        <div class="comp-sub">Automated and analyst-triggered enforcement actions across the device fleet via MDM integration.</div>
+        <ul class="comp-list">
+          <li>Auto-quarantine on Critical severity</li>
+          <li>App install block policy push</li>
+          <li>Remote wipe (COPE devices)</li>
+          <li>Jira ticket auto-creation</li>
+          <li>SIEM event forwarding (Splunk / ELK)</li>
+          <li>Webhook support for custom playbooks</li>
+        </ul>
+      </div>
+
+      <div class="component-card">
+        <div class="comp-header">
+          <div class="comp-icon-wrap">💻</div>
+          <span class="comp-tag green">Python CLI · Rich</span>
+        </div>
+        <div class="comp-title">Security Lab CLI</div>
+        <div class="comp-sub">Command-line tool for SOC engineers and security researchers to run on-demand APK analysis.</div>
+        <ul class="comp-list">
+          <li><code>aegis scan &lt;apk&gt;</code> — full static scan</li>
+          <li><code>aegis dynamic &lt;apk&gt;</code> — sandbox execution</li>
+          <li><code>aegis report --format pdf|json</code></li>
+          <li><code>aegis device &lt;id&gt; --risk</code> — device posture</li>
+          <li>Integrates with backend API via API key</li>
+          <li>Offline mode for air-gapped environments</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       04 — RISK SCORING
+  ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2 class="section-title">Risk Scoring Model</h2>
+    </div>
+
+    <div class="risk-formula">
+      <div class="formula-label">// Composite Risk Score Formula</div>
+      <div class="formula-main">
+        RiskScore = (W₁ × DeviceRisk) + (W₂ × AppRisk) + (W₃ × BehaviorAnomaly) + (W₄ × ThreatIntel)
+      </div>
+      <div class="formula-breakdown">
+        <div class="formula-var"><span class="var-name">DeviceRisk</span><span class="var-desc">Root, patch level, integrity, bootloader</span></div>
+        <div class="formula-var"><span class="var-name">AppRisk</span><span class="var-desc">Permissions, secrets, obfuscation, trackers</span></div>
+        <div class="formula-var"><span class="var-name">BehaviorAnomaly</span><span class="var-desc">Runtime deviations from baseline profile</span></div>
+        <div class="formula-var"><span class="var-name">ThreatIntel</span><span class="var-desc">VirusTotal, OTX, internal reputation feed</span></div>
+      </div>
+    </div>
+
+    <div class="sev-row">
+      <div class="sev-card">
+        <div class="sev-bar" style="background: #3bdc64"></div>
+        <div class="sev-score" style="color:#3bdc64">0–24</div>
+        <div class="sev-label">Low</div>
+        <div class="sev-action">Monitor · No action required</div>
+      </div>
+      <div class="sev-card">
+        <div class="sev-bar" style="background: var(--accent4)"></div>
+        <div class="sev-score" style="color:var(--accent4)">25–49</div>
+        <div class="sev-label">Medium</div>
+        <div class="sev-action">Alert SOC · Review within 24h</div>
+      </div>
+      <div class="sev-card">
+        <div class="sev-bar" style="background: #fb923c"></div>
+        <div class="sev-score" style="color:#fb923c">50–74</div>
+        <div class="sev-label">High</div>
+        <div class="sev-action">Page analyst · Restrict network</div>
+      </div>
+      <div class="sev-card">
+        <div class="sev-bar" style="background: var(--accent2)"></div>
+        <div class="sev-score" style="color:var(--accent2)">75–100</div>
+        <div class="sev-label">Critical</div>
+        <div class="sev-action">Auto quarantine · MDM action</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       05 — IMPLEMENTATION GUIDE
+  ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2 class="section-title">Implementation Roadmap</h2>
+    </div>
+
+    <div class="timeline">
+
+      <div class="tl-item">
+        <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+        <div class="tl-content">
+          <div class="tl-step">Phase 1 — Weeks 1–4</div>
+          <div class="tl-title">Foundation: Agent + Ingestion</div>
+          <div class="tl-desc">Deploy the Kotlin Android agent with work profile support via MDM enrollment. Implement device scanner modules (root detection, Play Integrity, patch level). Stand up the FastAPI ingestion gateway with mTLS and Kafka message bus. Define all telemetry schemas (Protobuf/Avro).</div>
+          <div class="tl-tech">
+            <span class="tech-pill">Kotlin</span>
+            <span class="tech-pill">Android WorkManager</span>
+            <span class="tech-pill">FastAPI</span>
+            <span class="tech-pill">Kafka</span>
+            <span class="tech-pill">Protobuf</span>
+            <span class="tech-pill">mTLS</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+        <div class="tl-content">
+          <div class="tl-step">Phase 2 — Weeks 5–8</div>
+          <div class="tl-title">Static Analysis Engine</div>
+          <div class="tl-desc">Build the APK analysis pipeline: intake from S3, decompile with jadx, scan with custom rules. Implement secret detection (entropy + regex), permission abuse scoring, tracker SDK fingerprinting. Store results in PostgreSQL. Expose analysis API for CLI and dashboard.</div>
+          <div class="tl-tech">
+            <span class="tech-pill">apktool</span>
+            <span class="tech-pill">jadx</span>
+            <span class="tech-pill">MobSF</span>
+            <span class="tech-pill">PostgreSQL</span>
+            <span class="tech-pill">S3</span>
+            <span class="tech-pill">Celery</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+        <div class="tl-content">
+          <div class="tl-step">Phase 3 — Weeks 9–13</div>
+          <div class="tl-title">Dynamic Sandbox + Behavior Fingerprinting</div>
+          <div class="tl-desc">Deploy emulator cluster (Android x86 images in Docker). Integrate Frida server for hook injection. Capture runtime network, file, and crypto events. Build behavior signature generation pipeline. Implement behavior clustering to group similar malware families.</div>
+          <div class="tl-tech">
+            <span class="tech-pill">Frida</span>
+            <span class="tech-pill">Android Emulator</span>
+            <span class="tech-pill">Docker</span>
+            <span class="tech-pill">NGINX</span>
+            <span class="tech-pill">MinIO</span>
+            <span class="tech-pill">Redis</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+        <div class="tl-content">
+          <div class="tl-step">Phase 4 — Weeks 14–17</div>
+          <div class="tl-title">Risk Engine + SOC Dashboard</div>
+          <div class="tl-desc">Implement the composite risk scoring model. Integrate VirusTotal and OTX threat intel feeds. Build the React SOC dashboard with real-time WebSocket updates. Add device fleet heatmap, alert timeline, and one-click MDM response actions.</div>
+          <div class="tl-tech">
+            <span class="tech-pill">Python</span>
+            <span class="tech-pill">React / Next.js</span>
+            <span class="tech-pill">WebSocket</span>
+            <span class="tech-pill">VirusTotal API</span>
+            <span class="tech-pill">Elasticsearch</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+        <div class="tl-content">
+          <div class="tl-step">Phase 5 — Weeks 18–20</div>
+          <div class="tl-title">Response Automation + Integrations</div>
+          <div class="tl-desc">Wire up MDM integration (Intune / VMware Workspace ONE) for automated quarantine and policy push. Implement SIEM forwarding to Splunk and ELK. Add Jira auto-ticketing. Ship the CLI tool with full static + dynamic support and PDF report export.</div>
+          <div class="tl-tech">
+            <span class="tech-pill">Microsoft Intune API</span>
+            <span class="tech-pill">Splunk HEC</span>
+            <span class="tech-pill">Jira API</span>
+            <span class="tech-pill">Python CLI (Click)</span>
+            <span class="tech-pill">ReportLab PDF</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-left"><div class="tl-dot"></div></div>
+        <div class="tl-content">
+          <div class="tl-step">Phase 6 — Weeks 21+</div>
+          <div class="tl-title">AI Analyst Layer + ML Hardening</div>
+          <div class="tl-desc">Integrate LLM for automated threat report generation and SOC triage chat. Train ML classifier on labeled APK dataset for automated malware classification. Add anomaly detection on device behavioral baselines. Implement feedback loop from analyst verdicts.</div>
+          <div class="tl-tech">
+            <span class="tech-pill">Claude API</span>
+            <span class="tech-pill">scikit-learn</span>
+            <span class="tech-pill">MLflow</span>
+            <span class="tech-pill">LangChain</span>
+            <span class="tech-pill">RAG Pipeline</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       06 — DATA COLLECTION SCHEMA
+  ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2 class="section-title">Telemetry Schema (Privacy-Safe)</h2>
+    </div>
+
+    <div class="callout">
+      <strong>Privacy Principle:</strong> AEGIS collects security signals only — no message content, no keystrokes, no personal files. All collection is disclosed in the MDM enrollment agreement. BYOD devices receive reduced collection scope.
+    </div>
+
+    <div class="code-block">
+      <pre><span class="cm">// DeviceTelemetry — sent on schedule + event trigger</span>
+{
+  <span class="nm">"device_id"</span>:       <span class="st">"sha256(android_id + enrollment_cert)"</span>,  <span class="cm">// pseudonymized</span>
+  <span class="nm">"timestamp"</span>:       <span class="st">"ISO8601"</span>,
+  <span class="nm">"os_version"</span>:      <span class="st">"14.0"</span>,
+  <span class="nm">"security_patch"</span>:  <span class="st">"2024-12-01"</span>,
+  <span class="nm">"is_rooted"</span>:       <span class="kw">false</span>,
+  <span class="nm">"bootloader_state"</span>: <span class="st">"locked"</span>,
+  <span class="nm">"play_integrity"</span>:  <span class="st">"MEETS_STRONG_INTEGRITY"</span>,
+  <span class="nm">"installed_apps"</span>: [
+    {
+      <span class="nm">"package"</span>:       <span class="st">"com.example.app"</span>,
+      <span class="nm">"sha256_apk"</span>:   <span class="st">"abc123..."</span>,
+      <span class="nm">"cert_hash"</span>:    <span class="st">"def456..."</span>,
+      <span class="nm">"permissions"</span>:  [<span class="st">"CAMERA"</span>, <span class="st">"READ_CONTACTS"</span>],
+      <span class="nm">"install_src"</span>:  <span class="st">"PLAY_STORE"</span>
+    }
+  ],
+  <span class="nm">"events"</span>: [
+    { <span class="nm">"type"</span>: <span class="st">"APP_INSTALLED"</span>, <span class="nm">"pkg"</span>: <span class="st">"..."</span>, <span class="nm">"ts"</span>: <span class="st">"..."</span> },
+    { <span class="nm">"type"</span>: <span class="st">"PERMISSION_GRANT"</span>, <span class="nm">"perm"</span>: <span class="st">"RECORD_AUDIO"</span>, <span class="nm">"ts"</span>: <span class="st">"..."</span> }
+  ]
+}</pre>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       07 — INTEGRATIONS
+  ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2 class="section-title">Integration Matrix</h2>
+    </div>
+
+    <table class="int-table">
+      <thead>
+        <tr>
+          <th>System</th>
+          <th>Category</th>
+          <th>Integration Method</th>
+          <th>Data Flow</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Microsoft Intune</td>
+          <td>MDM / Enforcement</td>
+          <td>Graph API v1.0</td>
+          <td>AEGIS → Quarantine / Policy push</td>
+          <td><span class="int-badge active">Phase 5</span></td>
+        </tr>
+        <tr>
+          <td>Splunk</td>
+          <td>SIEM</td>
+          <td>HTTP Event Collector (HEC)</td>
+          <td>AEGIS → Alert events, risk scores</td>
+          <td><span class="int-badge active">Phase 5</span></td>
+        </tr>
+        <tr>
+          <td>Elastic / ELK</td>
+          <td>SIEM / Log Search</td>
+          <td>Logstash pipeline</td>
+          <td>AEGIS → Device telemetry stream</td>
+          <td><span class="int-badge active">Phase 5</span></td>
+        </tr>
+        <tr>
+          <td>Jira</td>
+          <td>Ticketing</td>
+          <td>REST API v3</td>
+          <td>AEGIS → Auto-create incident tickets</td>
+          <td><span class="int-badge active">Phase 5</span></td>
+        </tr>
+        <tr>
+          <td>VirusTotal</td>
+          <td>Threat Intel</td>
+          <td>REST API (hash lookup)</td>
+          <td>AEGIS → APK hash enrichment</td>
+          <td><span class="int-badge active">Phase 4</span></td>
+        </tr>
+        <tr>
+          <td>AlienVault OTX</td>
+          <td>Threat Intel</td>
+          <td>DirectConnect API</td>
+          <td>OTX → IP/domain reputation feed</td>
+          <td><span class="int-badge active">Phase 4</span></td>
+        </tr>
+        <tr>
+          <td>Claude / GPT-4</td>
+          <td>AI Analyst</td>
+          <td>Anthropic / OpenAI API</td>
+          <td>Static results → AI narrative report</td>
+          <td><span class="int-badge beta">Phase 6</span></td>
+        </tr>
+        <tr>
+          <td>PagerDuty</td>
+          <td>On-call alerting</td>
+          <td>Events API v2</td>
+          <td>Critical alerts → On-call page</td>
+          <td><span class="int-badge beta">Phase 6</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       08 — DIFFERENTIATORS
+  ═══════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <h2 class="section-title">Differentiating Capabilities</h2>
+    </div>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feat-num">01</div>
+        <div class="feat-title">Behavior Fingerprinting</div>
+        <div class="feat-desc">Dynamic sandbox generates a cryptographic behavior signature per APK — a hash of its runtime API call graph. Enables detection of repackaged malware that changes code but retains behavior.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feat-num">02</div>
+        <div class="feat-title">Local Risk Pre-scoring</div>
+        <div class="feat-desc">The Kotlin agent calculates a preliminary risk score on-device and transmits only meaningful deltas — reducing bandwidth by ~80% versus raw telemetry dumps while preserving privacy.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feat-num">03</div>
+        <div class="feat-title">App Reputation System</div>
+        <div class="feat-desc">Internal "enterprise app store" intelligence layer. Every app accumulates a trust score with behavioral history across the entire fleet, enabling early anomaly detection for new deployments.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feat-num">04</div>
+        <div class="feat-title">Permission Abuse Detector</div>
+        <div class="feat-desc">Time-series analysis of permission usage patterns. Detects apps that suddenly request elevated permissions post-install or exercise permissions at abnormal frequencies.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feat-num">05</div>
+        <div class="feat-title">Attack Path Visualization</div>
+        <div class="feat-desc">SOC dashboard renders full kill-chain graphs — from app install to permission grant to API call to data egress — as interactive node graphs for rapid incident investigation.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feat-num">06</div>
+        <div class="feat-title">LLM Threat Analyst</div>
+        <div class="feat-desc">Analyst-facing AI that transforms complex static/dynamic analysis JSON into plain-English threat reports with severity context, business impact, and step-by-step remediation guidance.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════ -->
+  <footer class="footer">
+    <div class="footer-brand">AEGIS<span>.</span></div>
+    <div class="footer-meta">Android Enterprise Guard &amp; Intelligence Security · Architecture Reference v2.0 · Confidential</div>
+  </footer>
+
+</div>
+</body>
+</html>

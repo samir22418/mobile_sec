@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AEGIS — Architecture v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #080c10;
+    color: #e8edf2;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 40px 32px;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+  }
+  .page { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; }
+
+  .header { text-align: center; margin-bottom: 40px; }
+  .top-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid #00e5ff; color: #00e5ff;
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    padding: 5px 14px; margin-bottom: 16px;
+  }
+  h1 { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; letter-spacing: -2px; margin-bottom: 6px; }
+  h1 span { color: #00e5ff; }
+  .sub { font-size: 10px; color: #6a7d90; letter-spacing: 3px; text-transform: uppercase; }
+
+  .legend { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-bottom: 40px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #9ab0c5; }
+  .dot { width: 10px; height: 10px; border-radius: 1px; }
+
+  .phase-header { display: flex; align-items: center; gap: 12px; margin: 24px 0 12px; width: 100%; }
+  .phase-num { font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; color: #6a7d90; letter-spacing: 2px; white-space: nowrap; }
+  .phase-line { flex: 1; height: 1px; background: #1e2a38; }
+  .phase-title { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: #9ab0c5; white-space: nowrap; }
+
+  .devices-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .device-node {
+    background: #131a22; border: 1px solid #1e2a38;
+    border-top: 2px solid #00e5ff;
+    padding: 12px 20px; text-align: center; min-width: 130px;
+  }
+  .device-icon { font-size: 22px; margin-bottom: 4px; }
+  .device-name { font-size: 11px; color: #9ab0c5; font-weight: 500; }
+  .device-note { font-size: 9px; color: #6a7d90; margin-top: 2px; }
+
+  .arrow-down { display: flex; flex-direction: column; align-items: center; margin: 4px 0; }
+  .arrow-line { width: 1px; height: 28px; background: linear-gradient(#00e5ff44, #00e5ff); }
+  .arrow-label { font-size: 9px; color: #6a7d90; margin: 2px 0; }
+  .arrow-head { color: #00e5ff; font-size: 12px; line-height: 1; }
+
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; }
+  .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+  .four-col  { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; }
+  .five-col  { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; width: 100%; }
+
+  .block { background: #0d1117; border: 1px solid #1e2a38; padding: 16px; position: relative; overflow: hidden; }
+  .block::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+  .block.cyan::before   { background: #00e5ff; }
+  .block.red::before    { background: #ff4d6d; }
+  .block.green::before  { background: #7fff6e; }
+  .block.gold::before   { background: #ffd166; }
+  .block.purple::before { background: #a78bfa; }
+  .block.teal::before   { background: #2dd4bf; }
+  .block.orange::before { background: #fb923c; }
+
+  .block-icon  { font-size: 18px; margin-bottom: 6px; }
+  .block-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .block.cyan   .block-title { color: #00e5ff; }
+  .block.red    .block-title { color: #ff4d6d; }
+  .block.green  .block-title { color: #7fff6e; }
+  .block.gold   .block-title { color: #ffd166; }
+  .block.purple .block-title { color: #a78bfa; }
+  .block.teal   .block-title { color: #2dd4bf; }
+  .block.orange .block-title { color: #fb923c; }
+
+  .block-sub  { font-size: 9px; color: #6a7d90; margin-bottom: 8px; }
+  .block-items { list-style: none; }
+  .block-items li { font-size: 10px; color: #9ab0c5; padding: 2px 0 2px 14px; position: relative; }
+  .block-items li::before { content: '▸'; position: absolute; left: 0; font-size: 8px; color: #6a7d90; }
+
+  .kafka-bus {
+    background: #0d1117; border: 1px solid #ffd166;
+    border-left: 3px solid #ffd166;
+    padding: 16px 24px; width: 100%;
+    box-shadow: 0 0 24px rgba(255,209,102,0.07);
+  }
+  .kafka-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .kafka-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: #ffd166; }
+  .kafka-sub   { font-size: 9px; color: #6a7d90; }
+  .kafka-topics { display: flex; gap: 10px; flex-wrap: wrap; }
+  .kafka-topic { border: 1px solid #ffd16640; color: #ffd166; font-size: 9px; padding: 5px 10px; letter-spacing: 1px; line-height: 1.6; }
+
+  .formula {
+    background: #0d1117; border: 1px solid #1e2a38;
+    border-left: 3px solid #00e5ff; padding: 14px 18px; width: 100%; margin-bottom: 10px;
+  }
+  .formula-title { font-size: 9px; color: #00e5ff; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+  .formula code { color: #00e5ff; font-size: 11px; }
+  .formula .breakdown { font-size: 10px; color: #6a7d90; margin-top: 6px; line-height: 1.8; }
+
+  .storage-item {
+    flex: 1; background: #0d1117; border: 1px solid #1e3a2a;
+    border-top: 2px solid #7fff6e; padding: 12px; text-align: center;
+  }
+  .storage-icon { font-size: 18px; margin-bottom: 4px; }
+  .storage-name { font-size: 11px; color: #7fff6e; font-family: 'Syne', sans-serif; font-weight: 700; }
+  .storage-tech { font-size: 9px; color: #6a7d90; margin-top: 2px; }
+
+  /* PARALLEL BAND */
+  .parallel-band {
+    background: #0a1018; border: 1px dashed #ff4d6d44;
+    padding: 12px; width: 100%; margin-bottom: 0;
+    position: relative;
+  }
+  .parallel-label {
+    position: absolute; top: -10px; left: 16px;
+    background: #080c10; padding: 0 8px;
+    font-size: 9px; color: #ff4d6d; letter-spacing: 2px; text-transform: uppercase;
+  }
+
+  /* SERVER BOX */
+  .server-box {
+    background: #0d1117; border: 1px solid #a78bfa;
+    border-left: 3px solid #a78bfa;
+    padding: 16px 20px; width: 100%;
+    box-shadow: 0 0 20px rgba(167,139,250,0.07);
+  }
+  .server-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: #a78bfa; margin-bottom: 6px; }
+  .server-sub { font-size: 9px; color: #6a7d90; margin-bottom: 10px; }
+  .server-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .server-col h4 { font-size: 10px; color: #9ab0c5; margin-bottom: 6px; font-family: 'Syne', sans-serif; }
+  .server-col ul { list-style: none; }
+  .server-col ul li { font-size: 10px; color: #6a7d90; padding: 2px 0 2px 12px; position: relative; }
+  .server-col ul li::before { content: '▸'; position: absolute; left: 0; font-size: 8px; color: #a78bfa44; }
+
+  .note-box {
+    background: #0d1117; border: 1px solid #1e2a38;
+    border-left: 3px solid #7fff6e;
+    padding: 10px 14px; font-size: 10px; color: #6a7d90; margin-top: 8px;
+  }
+  .note-box strong { color: #7fff6e; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="top-badge">◆ Simplified Architecture v2</div>
+    <h1>AE<span>GIS</span></h1>
+    <div class="sub">Android Enterprise Guard &amp; Intelligence Security</div>
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-item"><div class="dot" style="background:#00e5ff"></div> PH1 — Agent &amp; Collection</div>
+    <div class="legend-item"><div class="dot" style="background:#ffd166"></div> PH2 — Server Ingestion</div>
+    <div class="legend-item"><div class="dot" style="background:#ff4d6d"></div> PH3 — Analysis (Static + AI CLI)</div>
+    <div class="legend-item"><div class="dot" style="background:#fb923c"></div> PH4 — Log Streaming &amp; AI</div>
+    <div class="legend-item"><div class="dot" style="background:#a78bfa"></div> PH5 — Risk &amp; Response</div>
+    <div class="legend-item"><div class="dot" style="background:#7fff6e"></div> Storage</div>
+  </div>
+
+  <!-- ════════ PH 01 ════════ -->
+  <div class="phase-header">
+    <span class="phase-num">PH 01</span>
+    <div class="phase-line"></div>
+    <span class="phase-title">Agent — Device Collection (Kotlin Android Agent)</span>
+    <div class="phase-line"></div>
+  </div>
+
+  <div class="devices-row">
+    <div class="device-node"><div class="device-icon">📱</div><div class="device-name">BYOD Device</div><div class="device-note">Corp + Personal</div></div>
+    <div class="device-node"><div class="device-icon">🏢</div><div class="device-name">Corp-Owned</div><div class="device-note">Full MDM Control</div></div>
+    <div class="device-node"><div class="device-icon">💻</div><div class="device-name">Enrolled Device</div><div class="device-note">Intune Managed</div></div>
+  </div>
+
+  <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-label">aegis-agent — Kotlin Library (minSdk 26)</div><div class="arrow-head">▼</div></div>
+
+  <div class="three-col">
+    <div class="block cyan">
+      <div class="block-icon">🔍</div>
+      <div class="block-title">DeviceScanner</div>
+      <div class="block-sub">Kotlin · Play Integrity API</div>
+      <ul class="block-items">
+        <li>Root detection (3 methods)</li>
+        <li>Play Integrity attestation</li>
+        <li>Security patch date</li>
+        <li>Bootloader state</li>
+        <li>→ DeviceReport (JSON)</li>
+      </ul>
+    </div>
+    <div class="block cyan">
+      <div class="block-icon">📦</div>
+      <div class="block-title">AppIntelligenceCollector</div>
+      <div class="block-sub">Kotlin · DataStore · Flow</div>
+      <ul class="block-items">
+        <li>Installed packages + SHA-256</li>
+        <li>Signing cert + permissions</li>
+        <li>Install source (Play / sideloaded)</li>
+        <li>Delta diffing — bandwidth opt</li>
+        <li>→ AppSnapshot (JSON)</li>
+      </ul>
+    </div>
+    <div class="block cyan">
+      <div class="block-icon">📡</div>
+      <div class="block-title">Log Filter Agent</div>
+      <div class="block-sub">Kotlin · Logcat · WorkManager</div>
+      <ul class="block-items">
+        <li>Monitor logcat in real-time</li>
+        <li>Filter: SECURITY / CRASH / ANOMALY tags only</li>
+        <li>Discard all routine/verbose logs</li>
+        <li>Buffer important logs locally</li>
+        <li>→ ImportantLogs (JSON)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-label">All data serialized as JSON — sent via mTLS HTTPS</div><div class="arrow-head">▼</div></div>
+
+  <!-- ════════ PH 02 ════════ -->
+  <div class="phase-header">
+    <span class="phase-num">PH 02</span>
+    <div class="phase-line"></div>
+    <span class="phase-title">Server Ingestion — All JSON arrives here first</span>
+    <div class="phase-line"></div>
+  </div>
+
+  <div class="server-box">
+    <div class="server-title">🖥️ FastAPI Ingestion Server</div>
+    <div class="server-sub">Python 3.11 · Pydantic v2 · mTLS · PostgreSQL · MinIO/S3 — Central entry point for ALL device data</div>
+    <div class="server-cols">
+      <div class="server-col">
+        <h4>📥 Endpoints</h4>
+        <ul>
+          <li>POST /telemetry — DeviceReport JSON</li>
+          <li>POST /apps — AppSnapshot JSON</li>
+          <li>POST /logs — ImportantLogs JSON</li>
+          <li>POST /apk/upload — APK binary</li>
+          <li>GET /health · /metrics</li>
+        </ul>
+      </div>
+      <div class="server-col">
+        <h4>🔐 Security</h4>
+        <ul>
+          <li>mTLS: device_id from cert CN</li>
+          <li>Rate limit: 10 req/min per device</li>
+          <li>APK: validate magic bytes only</li>
+          <li>Never log raw payloads</li>
+        </ul>
+      </div>
+      <div class="server-col">
+        <h4>📤 Routing</h4>
+        <ul>
+          <li>Telemetry → PostgreSQL + Kafka</li>
+          <li>APK → MinIO/S3 + Kafka apk.analysis</li>
+          <li>Logs → Kafka logs.stream</li>
+          <li>Malicious flag → Kafka device.flagged</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-label">Malicious/flagged devices routed to analysis pipeline</div><div class="arrow-head">▼</div></div>
+
+  <!-- ════════ PH 03 ════════ -->
+  <div class="phase-header">
+    <span class="phase-num">PH 03</span>
+    <div class="phase-line"></div>
+    <span class="phase-title">Analysis — Static Engine + AI CLI Agent (Parallel)</span>
+    <div class="phase-line"></div>
+  </div>
+
+  <div class="parallel-band">
+    <div class="parallel-label">⚡ Run in Parallel — same phase, same trigger</div>
+    <div style="height:18px"></div>
+    <div class="two-col">
+      <div class="block red">
+        <div class="block-icon">🔬</div>
+        <div class="block-title">Python Static Analyzer</div>
+        <div class="block-sub">apktool · jadx · Celery · Redis</div>
+        <ul class="block-items">
+          <li>APKUnpacker: decompile smali + Java/Kotlin</li>
+          <li>SecretDetector: API keys + entropy &gt;4.5</li>
+          <li>PermissionAnalyzer: risk matrix (DANGEROUS/SIG/NORMAL)</li>
+          <li>TrackerDetector: Exodus Privacy DB</li>
+          <li>ObfuscationDetector: avg identifier &lt;3 chars</li>
+          <li>→ StaticReport JSON → risk.scores Kafka</li>
+        </ul>
+      </div>
+      <div class="block red">
+        <div class="block-icon">🤖</div>
+        <div class="block-title">AI CLI Agent (aegis scan)</div>
+        <div class="block-sub">Python · Click · Rich · Claude API</div>
+        <ul class="block-items">
+          <li>aegis scan &lt;apk_path&gt; — full local analysis</li>
+          <li>Receives same APK as Python engine</li>
+          <li>AI reviews decompiled code for logic threats</li>
+          <li>Color-coded Rich table output (risk 0–100)</li>
+          <li>aegis report: PDF/JSON/HTML output</li>
+          <li>→ AI findings merged into StaticReport</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="note-box"><strong>Why parallel?</strong> Python static engine is fast and deterministic (regex, entropy, rules). AI CLI agent catches subtle logic threats and business-logic abuse that rules miss. Both run simultaneously on the same APK and their outputs are merged into one StaticReport.</div>
+
+  <div class="arrow-down"><div class="arrow-line"></div><div class="arrow-label">Important logs streamed from server</div><div class="arrow-head">▼</div></div>
+
+  <!-- ════════ PH 04 ════════ -->
+  <div class="phase-header">
+    <span class="phase-num">PH 04</span>
+    <div class="phase-line"></div>
+    <span class="phase-title">Log Streaming — AI Agent works on Important Logs only</span>
+    <div class="phase-line"></div>
+  </div>
+
+  <div class="two-col">
+    <div class="block orange">
+      <div class="block-icon">🌊</div>
+      <div class="block-title">Log Stream Processor</div>
+      <div class="block-sub">Kafka logs.stream · Python consumer</div>
+      <ul class="block-items">
+        <li>Consumes logs.stream Kafka topic (real-time)</li>
+        <li>Only processes: SECURITY · CRASH · ANOMALY tagged logs</li>
+        <li>All other logs discarded immediately — never stored</li>
+        <li>Batches important logs per device (5s window)</li>
+        <li>Dedup: skip same log fingerprint within 60s</li>
+        <li>→ Forwards important batches to AI Agent</li>
+      </ul>
+    </div>
+    <div class="block orange">
+      <div class="block-icon">🧠</div>
+      <div class="block-title">AI Log Analyst Agent</div>
+      <div class="block-sub">Claude API · claude-sonnet-4 · temp 0.2</div>
+      <ul class="block-items">
+        <li>Receives only pre-filtered important log batches</li>
+        <li>Detects: privilege escalation patterns</li>
+        <li>Detects: repeated auth failures / brute force</li>
+        <li>Detects: unusual process spawning</li>
+        <li>Detects: data exfiltration indicators</li>
+        <li>→ LogThreatReport → risk.scores Kafka</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ════════ PH 05 ════════ -->
+  <div class="phase-header">
+    <span class="phase-num">PH 05</span>
+    <div class="phase-line"></div>
+    <span class="phase-title">Risk Engine — Score · Alert · Respond</span>
+    <div class="phase-line"></div>
+  </div>
+
+  <div class="formula">
+    <div class="formula-title">⚖ Risk Score Formula</div>
+    <code>RiskScore = (0.35 × StaticAnalysis) + (0.35 × DevicePosture) + (0.20 × LogThreats) + (0.10 × ThreatIntel)</code>
+    <div class="breakdown">
+      DevicePosture: +40 rooted · +30 Play Integrity FAIL · +20 patch &gt;90d · +10 bootloader unlocked<br>
+      StaticAnalysis: +25 secrets found · +20 obfuscation · +15 trackers · +permission risk matrix · AI findings<br>
+      LogThreats: AI LogThreatReport severity score (0–40 pts)<br>
+      ThreatIntel: VirusTotal hash lookup · +50 if detections &gt; 3 · Alert dedup: 4h window
+    </div>
+  </div>
+
+  <div class="three-col">
+    <div class="block purple">
+      <div class="block-icon">🧮</div>
+      <div class="block-title">Risk Engine</div>
+      <div class="block-sub">Python · PostgreSQL · VirusTotal</div>
+      <ul class="block-items">
+        <li>Aggregates all signals into RiskScore</li>
+        <li>VirusTotal hash lookup (async)</li>
+        <li>Alert dedup: 4h, +10pts threshold</li>
+        <li>Score ≥ 75 → trigger response.actions</li>
+      </ul>
+    </div>
+    <div class="block purple">
+      <div class="block-icon">📊</div>
+      <div class="block-title">SOC Dashboard</div>
+      <div class="block-sub">FastAPI · React · WebSocket · JWT</div>
+      <ul class="block-items">
+        <li>Fleet overview + live alert ticker</li>
+        <li>Device detail: posture + apps + logs</li>
+        <li>Alert feed (Critical/High/Medium)</li>
+        <li>Roles: ANALYST / RESPONDER / ADMIN</li>
+      </ul>
+    </div>
+    <div class="block purple">
+      <div class="block-icon">🛡️</div>
+      <div class="block-title">MDM Response</div>
+      <div class="block-sub">Intune · Graph API · Jira · FCM</div>
+      <ul class="block-items">
+        <li>MEDIUM → ALERT_SOC + Jira ticket</li>
+        <li>HIGH → + FCM notify + restrict network</li>
+        <li>CRITICAL → + Intune quarantine</li>
+        <li>All actions logged · manual retry</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ════════ DATA ════════ -->
+  <div class="phase-header">
+    <span class="phase-num">DATA</span>
+    <div class="phase-line"></div>
+    <span class="phase-title">Persistence Layer</span>
+    <div class="phase-line"></div>
+  </div>
+
+  <div class="four-col">
+    <div class="storage-item">
+      <div class="storage-icon">🐘</div>
+      <div class="storage-name">PostgreSQL</div>
+      <div class="storage-tech">Devices · RiskScores · Alerts · Actions</div>
+    </div>
+    <div class="storage-item">
+      <div class="storage-icon">🪣</div>
+      <div class="storage-name">MinIO / S3</div>
+      <div class="storage-tech">APK file storage</div>
+    </div>
+    <div class="storage-item">
+      <div class="storage-icon">⚡</div>
+      <div class="storage-name">Redis</div>
+      <div class="storage-tech">Celery broker · rate limits · dedup cache</div>
+    </div>
+    <div class="storage-item">
+      <div class="storage-icon">📱</div>
+      <div class="storage-name">Android DataStore</div>
+      <div class="storage-tech">On-device delta diffs · log buffer</div>
+    </div>
+  </div>
+
+  <div style="text-align:center; margin-top: 40px; font-size: 9px; color: #6a7d90; letter-spacing: 2px; text-transform: uppercase;">
+    AEGIS v2 — 5 Phases · Simplified · Dynamic Analysis Removed · All Data via JSON → Server
+  </div>
+
+</div>
+</body>
+</html>
