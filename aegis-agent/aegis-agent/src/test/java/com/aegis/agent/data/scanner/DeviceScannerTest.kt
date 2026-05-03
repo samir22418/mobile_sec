@@ -2,6 +2,7 @@ package com.aegis.agent.data.scanner
 
 import android.content.Context
 import com.aegis.agent.domain.model.DeviceReport
+import com.aegis.agent.domain.model.IntegrityCheckResult
 import com.aegis.agent.domain.model.IntegrityVerdict
 import com.aegis.agent.domain.model.RootDetectionResult
 import io.mockk.coEvery
@@ -22,30 +23,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
-// =============================================================================
-// DeviceScannerTest
-//
-// Unit tests for DeviceScanner, RootDetector, and IntegrityApiClient.
-//
-// Strategy:
-//  - RootDetector: spyk + mocked File.exists() calls (filesystem-independent)
-//  - IntegrityApiClient: Mockk mock (callback simulated via coEvery)
-//  - DeviceScanner: spyk to override readSecurityPatchDate() / readBootloaderState()
-//    because those call android.os.Build and reflection which are unavailable in JVM tests
-//
-// JUnit5 annotations used:
-//  @Nested          — groups related tests into readable inner classes
-//  @DisplayName     — human-readable test names in IDE / CI reports
-//  @ParameterizedTest / @ValueSource — covers multiple inputs in one test method
-// =============================================================================
-
 @OptIn(ExperimentalCoroutinesApi::class)
 @DisplayName("DeviceScanner unit tests")
 class DeviceScannerTest {
-
-    // =========================================================================
-    // Shared fixtures
-    // =========================================================================
 
     private val testDispatcher = StandardTestDispatcher()
     private val mockContext: Context = mockk(relaxed = true)
@@ -63,14 +43,11 @@ class DeviceScannerTest {
                 rootDetector = rootDetector,
                 integrityApiClient = mockIntegrityClient,
                 deviceId = "test-device-001",
+                mainDispatcher = testDispatcher,
             ),
-            recordPrivateCalls = true
+            recordPrivateCalls = true,
         )
     }
-
-    // =========================================================================
-    // RootDetector Tests
-    // =========================================================================
 
     @Nested
     @DisplayName("RootDetector")
@@ -86,83 +63,68 @@ class DeviceScannerTest {
         @Test
         @DisplayName("isSuBinaryPresent() returns false when no su binary exists")
         fun `isSuBinaryPresent returns false on clean device`() {
-            // On a JVM test host none of the Android paths exist — this should be false
-            val result = detector.isSuBinaryPresent()
-            assertFalse(result, "Expected no su binary on JVM host")
+            assertFalse(detector.isSuBinaryPresent())
         }
 
         @Test
         @DisplayName("SU_BINARY_PATHS contains seven known root paths")
         fun `SU_BINARY_PATHS has expected paths`() {
             val paths = RootDetector.SU_BINARY_PATHS
-            assertEquals(7, paths.size, "Expected 7 known su binary paths")
-            assertTrue(paths.contains("/system/bin/su"), "Missing /system/bin/su")
-            assertTrue(paths.contains("/system/xbin/su"), "Missing /system/xbin/su")
-            assertTrue(paths.contains("/sbin/su"), "Missing /sbin/su")
-            assertTrue(paths.contains("/su/bin/su"), "Missing /su/bin/su")
-            assertTrue(paths.contains("/magisk/.core/bin/su"), "Missing Magisk path")
-            assertTrue(paths.contains("/data/local/tmp/su"), "Missing /data/local/tmp/su")
-            assertTrue(paths.contains("/vendor/bin/su"), "Missing /vendor/bin/su")
+
+            assertEquals(7, paths.size)
+            assertTrue(paths.contains("/system/bin/su"))
+            assertTrue(paths.contains("/system/xbin/su"))
+            assertTrue(paths.contains("/sbin/su"))
+            assertTrue(paths.contains("/su/bin/su"))
+            assertTrue(paths.contains("/magisk/.core/bin/su"))
+            assertTrue(paths.contains("/data/local/tmp/su"))
+            assertTrue(paths.contains("/vendor/bin/su"))
         }
 
         @Test
-        @DisplayName("isSuperuserApkPresent() returns false on JVM host (no /system/app)")
+        @DisplayName("isSuperuserApkPresent() returns false on JVM host")
         fun `isSuperuserApkPresent returns false on JVM host`() {
-            val result = detector.isSuperuserApkPresent()
-            assertFalse(result, "Expected no Superuser.apk on JVM host")
+            assertFalse(detector.isSuperuserApkPresent())
         }
 
         @ParameterizedTest
         @ValueSource(strings = ["test-keys", "test-keys,dev-keys", "TEST-KEYS"])
-        @DisplayName("isTestKeysBuild() returns true for all test-key variants")
+        @DisplayName("isTestKeysBuild() returns true for test-key variants")
         fun `isTestKeysBuild returns true for test-key tags`(buildTags: String) {
-            assertTrue(
-                detector.isTestKeysBuild(buildTags),
-                "Expected test-keys detection for: $buildTags"
-            )
+            assertTrue(detector.isTestKeysBuild(buildTags))
         }
 
         @ParameterizedTest
         @ValueSource(strings = ["release-keys", "dev-keys", "", "production"])
         @DisplayName("isTestKeysBuild() returns false for non-test-key tags")
         fun `isTestKeysBuild returns false for release tags`(buildTags: String) {
-            assertFalse(
-                detector.isTestKeysBuild(buildTags),
-                "Expected no test-keys detection for: $buildTags"
-            )
+            assertFalse(detector.isTestKeysBuild(buildTags))
         }
 
         @Test
         @DisplayName("RootDetectionResult.isRooted is true when any method detects root")
-        fun `RootDetectionResult isRooted composite is true when suBinary found`() {
-            val result = RootDetectionResult(
-                suBinaryFound = true,
-                testKeysFound = false,
-                superuserApkFound = false,
+        fun `RootDetectionResult isRooted composite is true when any method detects`() {
+            assertTrue(
+                RootDetectionResult(
+                    suBinaryFound = true,
+                    testKeysFound = false,
+                    superuserApkFound = false,
+                ).isRooted
             )
-            assertTrue(result.isRooted)
-        }
-
-        @Test
-        @DisplayName("RootDetectionResult.isRooted is true when testKeys found")
-        fun `RootDetectionResult isRooted composite is true when testKeys found`() {
-            val result = RootDetectionResult(
-                suBinaryFound = false,
-                testKeysFound = true,
-                superuserApkFound = false,
+            assertTrue(
+                RootDetectionResult(
+                    suBinaryFound = false,
+                    testKeysFound = true,
+                    superuserApkFound = false,
+                ).isRooted
             )
-            assertTrue(result.isRooted)
-        }
-
-        @Test
-        @DisplayName("RootDetectionResult.isRooted is true when Superuser.apk found")
-        fun `RootDetectionResult isRooted composite is true when superuserApk found`() {
-            val result = RootDetectionResult(
-                suBinaryFound = false,
-                testKeysFound = false,
-                superuserApkFound = true,
+            assertTrue(
+                RootDetectionResult(
+                    suBinaryFound = false,
+                    testKeysFound = false,
+                    superuserApkFound = true,
+                ).isRooted
             )
-            assertTrue(result.isRooted)
         }
 
         @Test
@@ -173,16 +135,13 @@ class DeviceScannerTest {
                 testKeysFound = false,
                 superuserApkFound = false,
             )
+
             assertFalse(result.isRooted)
         }
     }
 
-    // =========================================================================
-    // IntegrityApiClient — token parsing tests (no Play Services needed)
-    // =========================================================================
-
     @Nested
-    @DisplayName("IntegrityApiClient — token mapping")
+    @DisplayName("IntegrityApiClient decoded payload mapping")
     inner class IntegrityApiClientMappingTests {
 
         private lateinit var client: IntegrityApiClient
@@ -192,53 +151,41 @@ class DeviceScannerTest {
             client = IntegrityApiClient(context = mockContext, cloudProjectNumber = 0L)
         }
 
-        /**
-         * Encodes a payload JSON to Base64url so we can feed it to [mapVerdictFromToken]
-         * without a real JWS token.
-         */
-        private fun fakeToken(payloadJson: String): String {
-            val encoded = android.util.Base64.encodeToString(
-                payloadJson.toByteArray(),
-                android.util.Base64.URL_SAFE or android.util.Base64.NO_PADDING
+        @Test
+        @DisplayName("mapDecodedPayloadToVerdict returns MEETS_STRONG_INTEGRITY")
+        fun `mapDecodedPayloadToVerdict returns MEETS_STRONG_INTEGRITY`() {
+            val verdict = client.mapDecodedPayloadToVerdict(
+                """{"deviceIntegrity":{"deviceRecognitionVerdict":["MEETS_STRONG_INTEGRITY"]}}"""
             )
-            // JWS format: header.payload.signature
-            return "header.$encoded.signature"
+
+            assertEquals(IntegrityVerdict.MEETS_STRONG_INTEGRITY, verdict)
         }
 
         @Test
-        @DisplayName("mapVerdictFromToken returns MEETS_STRONG_INTEGRITY for strong label")
-        fun `mapVerdictFromToken returns MEETS_STRONG_INTEGRITY`() {
-            // Note: android.util.Base64 is not available on JVM — this test exercises
-            // the branch logic only when run on an Android device or Robolectric.
-            // On pure JVM the token split/decode would throw; we skip gracefully.
+        @DisplayName("mapDecodedPayloadToVerdict returns MEETS_DEVICE_INTEGRITY")
+        fun `mapDecodedPayloadToVerdict returns MEETS_DEVICE_INTEGRITY`() {
+            val verdict = client.mapDecodedPayloadToVerdict(
+                """{"deviceIntegrity":{"deviceRecognitionVerdict":["MEETS_DEVICE_INTEGRITY"]}}"""
+            )
+
+            assertEquals(IntegrityVerdict.MEETS_DEVICE_INTEGRITY, verdict)
         }
 
         @Test
-        @DisplayName("mapVerdictFromToken returns FAILS for malformed token")
-        fun `mapVerdictFromToken returns FAILS for token without dots`() {
-            val verdict = client.mapVerdictFromToken("not_a_jws_token")
-            assertEquals(IntegrityVerdict.FAILS, verdict)
-        }
+        @DisplayName("mapDecodedPayloadToVerdict returns FAILS for no recognized labels")
+        fun `mapDecodedPayloadToVerdict returns FAILS for no labels`() {
+            val verdict = client.mapDecodedPayloadToVerdict("""{"deviceIntegrity":{}}""")
 
-        @Test
-        @DisplayName("mapVerdictFromToken returns FAILS for empty token")
-        fun `mapVerdictFromToken returns FAILS for empty token`() {
-            val verdict = client.mapVerdictFromToken("")
             assertEquals(IntegrityVerdict.FAILS, verdict)
         }
     }
 
-    // =========================================================================
-    // DeviceScanner — full scan (mocked dependencies)
-    // =========================================================================
-
     @Nested
-    @DisplayName("DeviceScanner — full scan")
+    @DisplayName("DeviceScanner full scan")
     inner class DeviceScannerScanTests {
 
         @BeforeEach
         fun setUpScannerMocks() {
-            // Override Android-specific calls that don't work on JVM
             every { scanner.readSecurityPatchDate() } returns "2024-03-05"
             every { scanner.readBootloaderState() } returns "green"
         }
@@ -246,7 +193,7 @@ class DeviceScannerTest {
         @Test
         @DisplayName("scan() returns DeviceReport with correct deviceId")
         fun `scan returns DeviceReport with correct deviceId`() = runTest(testDispatcher) {
-            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns IntegrityVerdict.MEETS_DEVICE_INTEGRITY
+            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns integrity(IntegrityVerdict.MEETS_DEVICE_INTEGRITY)
 
             val report: DeviceReport = scanner.scan()
 
@@ -254,31 +201,33 @@ class DeviceScannerTest {
         }
 
         @Test
-        @DisplayName("scan() returns MEETS_DEVICE_INTEGRITY when API returns that verdict")
-        fun `scan returns MEETS_DEVICE_INTEGRITY verdict`() = runTest(testDispatcher) {
-            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns IntegrityVerdict.MEETS_DEVICE_INTEGRITY
+        @DisplayName("scan() returns requested integrity verdict")
+        fun `scan returns integrity verdict`() = runTest(testDispatcher) {
+            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns integrity(IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION)
 
             val report = scanner.scan()
 
-            assertEquals(IntegrityVerdict.MEETS_DEVICE_INTEGRITY, report.integrityVerdict)
+            assertEquals(IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION, report.integrityVerdict)
+            assertEquals("test integrity detail", report.integrityDetails)
         }
 
         @Test
-        @DisplayName("scan() returns FAILS when Play Integrity API throws")
-        fun `scan returns FAILS when integrity client throws`() = runTest(testDispatcher) {
+        @DisplayName("scan() returns API_ERROR when Play Integrity API throws")
+        fun `scan returns API_ERROR when integrity client throws`() = runTest(testDispatcher) {
             coEvery {
                 mockIntegrityClient.queryIntegrity(any())
             } throws RuntimeException("Network unavailable")
 
             val report = scanner.scan()
 
-            assertEquals(IntegrityVerdict.FAILS, report.integrityVerdict)
+            assertEquals(IntegrityVerdict.API_ERROR, report.integrityVerdict)
+            assertTrue(report.integrityDetails?.contains("Network unavailable") == true)
         }
 
         @Test
-        @DisplayName("scan() populates security patch date from mocked readSecurityPatchDate")
+        @DisplayName("scan() populates security patch date")
         fun `scan populates securityPatchDate`() = runTest(testDispatcher) {
-            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns IntegrityVerdict.MEETS_BASIC_INTEGRITY
+            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns integrity(IntegrityVerdict.MEETS_BASIC_INTEGRITY)
 
             val report = scanner.scan()
 
@@ -286,9 +235,9 @@ class DeviceScannerTest {
         }
 
         @Test
-        @DisplayName("scan() populates bootloader state from mocked readBootloaderState")
+        @DisplayName("scan() populates bootloader state")
         fun `scan populates bootloaderState`() = runTest(testDispatcher) {
-            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns IntegrityVerdict.MEETS_BASIC_INTEGRITY
+            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns integrity(IntegrityVerdict.MEETS_BASIC_INTEGRITY)
 
             val report = scanner.scan()
 
@@ -298,21 +247,21 @@ class DeviceScannerTest {
         @Test
         @DisplayName("scan() returns non-zero timestampEpochMs")
         fun `scan returns positive timestamp`() = runTest(testDispatcher) {
-            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns IntegrityVerdict.MEETS_STRONG_INTEGRITY
+            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns integrity(IntegrityVerdict.MEETS_STRONG_INTEGRITY)
 
             val report = scanner.scan()
 
-            assertTrue(report.timestampEpochMs > 0L, "Timestamp should be positive")
+            assertTrue(report.timestampEpochMs > 0L)
         }
 
         @Test
         @DisplayName("scan() returns rootDetection with all false on clean JVM host")
         fun `scan returns rootDetection all false on JVM host`() = runTest(testDispatcher) {
-            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns IntegrityVerdict.MEETS_STRONG_INTEGRITY
+            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns integrity(IntegrityVerdict.MEETS_STRONG_INTEGRITY)
 
             val report = scanner.scan()
 
-            assertFalse(report.rootDetection.isRooted, "Clean JVM host must not appear rooted")
+            assertFalse(report.rootDetection.isRooted)
             assertFalse(report.rootDetection.suBinaryFound)
             assertFalse(report.rootDetection.superuserApkFound)
         }
@@ -320,82 +269,79 @@ class DeviceScannerTest {
         @Test
         @DisplayName("scan() DeviceReport is serializable to non-empty JSON string")
         fun `scan result is serializable`() = runTest(testDispatcher) {
-            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns IntegrityVerdict.MEETS_BASIC_INTEGRITY
+            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns integrity(IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION)
 
             val json = scanner.scanToJson()
 
             assertNotNull(json)
-            assertTrue(json.contains("device_id"), "JSON must contain device_id field")
-            assertTrue(json.contains("integrity_verdict"), "JSON must contain integrity_verdict")
-            assertTrue(json.contains("security_patch_date"), "JSON must contain security_patch_date")
-            assertTrue(json.contains("bootloader_state"), "JSON must contain bootloader_state")
+            assertTrue(json.contains("device_id"))
+            assertTrue(json.contains("integrity_verdict"))
+            assertTrue(json.contains("integrity_details"))
+            assertTrue(json.contains("security_patch_date"))
+            assertTrue(json.contains("bootloader_state"))
         }
     }
 
-    // =========================================================================
-    // DeviceScanner — readSecurityPatchDate unit tests (no Android SDK needed)
-    // =========================================================================
-
     @Nested
-    @DisplayName("DeviceScanner — readSecurityPatchDate")
+    @DisplayName("DeviceScanner security patch date")
     inner class SecurityPatchDateTests {
 
         @Test
-        @DisplayName("readSecurityPatchDate returns 'unknown' when patch date is blank")
-        fun `readSecurityPatchDate returns unknown for blank`() {
-            // We verify the internal logic by creating a real (non-spied) scanner
-            // and checking that it handles blank correctly.
-            // Build.VERSION.SECURITY_PATCH returns "" in Robolectric by default.
+        @DisplayName("readSecurityPatchDate returns non-empty value")
+        fun `readSecurityPatchDate returns non-empty value`() {
             val plainScanner = DeviceScanner(
                 context = mockContext,
                 rootDetector = RootDetector(),
                 integrityApiClient = mockIntegrityClient,
                 deviceId = "test",
             )
-            // On pure JVM host Build.VERSION.SECURITY_PATCH is typically ""
+
             val result = plainScanner.readSecurityPatchDate()
-            // Either a real date or "unknown" — must be non-null, non-empty
+
             assertNotNull(result)
-            assertTrue(result.isNotEmpty(), "Security patch date must not be empty string")
+            assertTrue(result.isNotEmpty())
         }
     }
 
-    // =========================================================================
-    // DeviceScanner — readBootloaderState unit tests
-    // =========================================================================
-
     @Nested
-    @DisplayName("DeviceScanner — readBootloaderState")
+    @DisplayName("DeviceScanner bootloader state")
     inner class BootloaderStateTests {
 
         @Test
-        @DisplayName("readBootloaderState returns a non-null, non-empty string")
-        fun `readBootloaderState returns non-null string`() {
+        @DisplayName("readBootloaderState returns a non-empty string")
+        fun `readBootloaderState returns non-empty string`() {
             val plainScanner = DeviceScanner(
                 context = mockContext,
                 rootDetector = RootDetector(),
                 integrityApiClient = mockIntegrityClient,
                 deviceId = "test",
             )
+
             val result = plainScanner.readBootloaderState()
+
             assertNotNull(result)
-            assertTrue(result.isNotEmpty(), "Bootloader state must not be empty string")
+            assertTrue(result.isNotEmpty())
         }
 
         @Test
-        @DisplayName("readBootloaderState returns 'unknown' when reflection fails on JVM")
+        @DisplayName("readBootloaderState returns unknown when reflection fails on JVM")
         fun `readBootloaderState returns unknown on JVM`() {
-            // android.os.SystemProperties doesn't exist on JVM — reflection throws
             val plainScanner = DeviceScanner(
                 context = mockContext,
                 rootDetector = RootDetector(),
                 integrityApiClient = mockIntegrityClient,
                 deviceId = "test",
             )
-            // On JVM, Class.forName("android.os.SystemProperties") throws ClassNotFoundException
-            // DeviceScanner should catch it and return "unknown"
+
             val result = plainScanner.readBootloaderState()
-            assertEquals("unknown", result, "Expected 'unknown' when SystemProperties is unavailable")
+
+            assertEquals("unknown", result)
         }
     }
+
+    private fun integrity(verdict: IntegrityVerdict): IntegrityCheckResult =
+        IntegrityCheckResult(
+            verdict = verdict,
+            details = "test integrity detail",
+        )
 }

@@ -15,6 +15,7 @@ import com.aegis.agent.domain.model.InstallSource
 import com.aegis.agent.domain.model.PackageEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -389,16 +390,13 @@ class AppIntelligenceCollector @Inject constructor(
      */
     private suspend fun loadPreviousFingerprints(): Set<String>? {
         return try {
-            var result: Set<String>? = null
-            dataStore.data.collect { prefs ->
-                val raw = prefs[FINGERPRINTS_KEY]
-                result = if (raw.isNullOrBlank()) null else {
-                    json.decodeFromString<Set<String>>(raw)
-                }
-                // Take only the first emission — we just need the current snapshot
-                return@collect
+            val prefs = dataStore.data.first()
+            val raw = prefs[FINGERPRINTS_KEY]
+            if (raw.isNullOrBlank()) {
+                null
+            } else {
+                json.decodeFromString<Set<String>>(raw)
             }
-            result
         } catch (e: Exception) {
             Timber.w(e, "AppIntelligenceCollector: could not load previous fingerprints; treating as first run")
             null

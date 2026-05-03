@@ -1,9 +1,24 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.hilt)
 }
+
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        file.inputStream().use { load(it) }
+    }
+}
+
+val aegisCloudProjectNumber = (
+    localProperties.getProperty("AEGIS_CLOUD_PROJECT_NUMBER")
+        ?: providers.gradleProperty("AEGIS_CLOUD_PROJECT_NUMBER").orNull
+        ?: "0"
+).trim().toLongOrNull() ?: 0L
 
 android {
     namespace = "com.aegis.agent.sample"
@@ -15,6 +30,7 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        buildConfigField("long", "AEGIS_CLOUD_PROJECT_NUMBER", "${aegisCloudProjectNumber}L")
     }
 
     buildTypes {
@@ -38,7 +54,9 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
+
 }
 
 dependencies {
@@ -48,6 +66,7 @@ dependencies {
     // AndroidX
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 

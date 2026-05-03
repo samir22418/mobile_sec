@@ -77,6 +77,11 @@ dependencies {
     // DataStore — persistent key-value storage
     implementation(libs.androidx.datastore.preferences)
 
+    // Room — durable scan result history
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    kapt(libs.androidx.room.compiler)
+
     // Hilt — dependency injection
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
@@ -98,6 +103,7 @@ dependencies {
 
     // Unit Testing
     testImplementation(libs.junit5.api)
+    testImplementation(libs.junit5.params)
     testRuntimeOnly(libs.junit5.engine)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)

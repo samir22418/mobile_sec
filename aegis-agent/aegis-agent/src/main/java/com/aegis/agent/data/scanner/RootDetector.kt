@@ -53,8 +53,8 @@ class RootDetector {
      * @param buildTags the value of [android.os.Build.TAGS] (default: live value)
      * @return true if buildTags contains "test-keys".
      */
-    fun isTestKeysBuild(buildTags: String = android.os.Build.TAGS): Boolean =
-        buildTags.contains("test-keys", ignoreCase = true)
+    fun isTestKeysBuild(buildTags: String? = android.os.Build.TAGS): Boolean =
+        buildTags?.contains("test-keys", ignoreCase = true) == true
 
     // =========================================================================
     // Method C — Superuser.apk existence check

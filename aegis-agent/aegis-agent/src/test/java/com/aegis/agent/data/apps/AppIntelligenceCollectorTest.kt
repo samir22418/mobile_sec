@@ -67,7 +67,7 @@ class AppIntelligenceCollectorTest {
 
         // Default DataStore: no previous fingerprints stored → first-run scenario
         every { mockDataStore.data } returns flowOf(emptyPreferences())
-        coEvery { mockDataStore.edit(any()) } returns emptyPreferences()
+        coEvery { mockDataStore.updateData(any()) } returns emptyPreferences()
 
         collector = AppIntelligenceCollector(
             context    = mockContext,

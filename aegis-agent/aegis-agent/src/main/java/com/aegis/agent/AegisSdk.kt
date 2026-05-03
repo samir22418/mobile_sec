@@ -3,12 +3,16 @@ package com.aegis.agent
 import android.content.Context
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.aegis.agent.data.worker.TelemetrySyncWorker
 import com.aegis.agent.di.AgentConfigHolder
 import com.aegis.agent.domain.model.AgentConfig
+import com.aegis.agent.domain.model.ScanTrigger
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
@@ -70,6 +74,24 @@ object AegisSdk {
         Timber.i("AegisSdk: agent shut down — all scheduled work cancelled")
     }
 
+    fun requestScanNow(context: Context) {
+        val scanRequest = OneTimeWorkRequestBuilder<TelemetrySyncWorker>()
+            .setInputData(
+                workDataOf(TelemetrySyncWorker.INPUT_TRIGGER to ScanTrigger.MANUAL.name)
+            )
+            .addTag(TelemetrySyncWorker.TAG)
+            .addTag(TelemetrySyncWorker.MANUAL_TAG)
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            TelemetrySyncWorker.MANUAL_WORK_NAME,
+            ExistingWorkPolicy.REPLACE,
+            scanRequest
+        )
+
+        Timber.i("AegisSdk: manual scan requested")
+    }
+
     // =========================================================================
     // Private helpers
     // =========================================================================
@@ -86,6 +108,9 @@ object AegisSdk {
             repeatInterval = intervalMin,
             repeatIntervalTimeUnit = TimeUnit.MINUTES
         )
+            .setInputData(
+                workDataOf(TelemetrySyncWorker.INPUT_TRIGGER to ScanTrigger.PERIODIC.name)
+            )
             .setConstraints(constraints)
             .addTag(TelemetrySyncWorker.TAG)
             .build()

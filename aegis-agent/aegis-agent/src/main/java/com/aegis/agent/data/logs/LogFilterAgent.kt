@@ -1,11 +1,8 @@
 package com.aegis.agent.data.logs
 
 import com.aegis.agent.domain.model.ImportantLog
-import com.aegis.agent.domain.model.MatchedRule
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -143,7 +140,7 @@ class LogFilterAgent @Inject constructor(
         Timber.i("LogFilterAgent: starting")
 
         // Coroutine 1: Logcat reader → filter → buffer
-        readerJob = scope.launch(Dispatchers.IO) {
+        readerJob = scope.launch {
             logcatReader.lines().collect { rawLine ->
                 val result = filter.evaluate(rawLine.tag, rawLine.level, rawLine.message)
                     ?: return@collect   // Discard — never touch buffer for misses
@@ -176,7 +173,7 @@ class LogFilterAgent @Inject constructor(
         }
 
         // Coroutine 2: Periodic flush timer
-        flusherJob = scope.launch(Dispatchers.Default) {
+        flusherJob = scope.launch {
             while (isActive) {
                 delay(FLUSH_INTERVAL_MS)
                 flushBuffer()
@@ -196,7 +193,8 @@ class LogFilterAgent @Inject constructor(
         flusherJob?.cancel()
         readerJob  = null
         flusherJob = null
-        scope.launch { bufferMutex.withLock { buffer.clear() } }
+        buffer.clear()
+        idCounter.set(0L)
     }
 
     /**

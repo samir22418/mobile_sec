@@ -3,9 +3,11 @@ package com.aegis.agent.data.scanner
 import android.content.Context
 import android.os.Build
 import com.aegis.agent.domain.model.DeviceReport
+import com.aegis.agent.domain.model.IntegrityCheckResult
 import com.aegis.agent.domain.model.IntegrityVerdict
 import com.aegis.agent.domain.model.RootDetectionResult
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -49,6 +51,7 @@ class DeviceScanner @Inject constructor(
     private val rootDetector: RootDetector,
     private val integrityApiClient: IntegrityApiClient,
     @Named("deviceId") private val deviceId: String,
+    private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) {
 
     // =========================================================================
@@ -83,15 +86,18 @@ class DeviceScanner @Inject constructor(
 
         // Play Integrity must be called from the Main thread (it's a Google
         // Play Services Tasks API).  Switch back to Main for the duration.
-        val verdict = withContext(Dispatchers.Main) {
-            queryIntegrityVerdict()
+        val integrity = withContext(mainDispatcher) {
+            queryIntegrity()
         }
 
         DeviceReport(
             deviceId           = deviceId,
             timestampEpochMs   = System.currentTimeMillis(),
             rootDetection      = rootResult,
-            integrityVerdict   = verdict,
+            integrityVerdict   = integrity.verdict,
+            integrityDetails   = integrity.details,
+            integrityErrorCode = integrity.errorCode,
+            integrityTokenHashSha256 = integrity.tokenHashSha256,
             securityPatchDate  = patchDate,
             bootloaderState    = bootloader,
         ).also {
@@ -157,13 +163,16 @@ class DeviceScanner @Inject constructor(
      * @return [IntegrityVerdict] — MEETS_STRONG_INTEGRITY, MEETS_DEVICE_INTEGRITY,
      *         MEETS_BASIC_INTEGRITY, or FAILS.
      */
-    private suspend fun queryIntegrityVerdict(): IntegrityVerdict {
+    private suspend fun queryIntegrity(): IntegrityCheckResult {
         val nonce = buildNonce()
         return try {
             integrityApiClient.queryIntegrity(nonce)
         } catch (e: Exception) {
-            Timber.e(e, "DeviceScanner: Play Integrity query failed — degrading to FAILS")
-            IntegrityVerdict.FAILS
+            Timber.e(e, "DeviceScanner: Play Integrity query failed")
+            IntegrityCheckResult(
+                verdict = IntegrityVerdict.API_ERROR,
+                details = "Play Integrity query crashed locally: ${e.message ?: e::class.java.simpleName}",
+            )
         }
     }
 
@@ -175,10 +184,9 @@ class DeviceScanner @Inject constructor(
      */
     private fun buildNonce(): String {
         val raw = "$deviceId:${System.currentTimeMillis()}"
-        return android.util.Base64.encodeToString(
-            raw.toByteArray(Charsets.UTF_8),
-            android.util.Base64.URL_SAFE or android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP
-        )
+        return java.util.Base64.getUrlEncoder()
+            .withoutPadding()
+            .encodeToString(raw.toByteArray(Charsets.UTF_8))
     }
 
     // =========================================================================
@@ -194,7 +202,7 @@ class DeviceScanner @Inject constructor(
      * @return ISO-8601 date string, or "unknown" if the field is blank/null.
      */
     internal fun readSecurityPatchDate(): String =
-        Build.VERSION.SECURITY_PATCH.takeIf { it.isNotBlank() } ?: "unknown"
+        Build.VERSION.SECURITY_PATCH?.takeIf { it.isNotBlank() } ?: "unknown"
 
     // =========================================================================
     // Bootloader state

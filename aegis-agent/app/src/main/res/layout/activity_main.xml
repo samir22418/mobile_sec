@@ -1,39 +1,376 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="32dp"
-    android:background="#0D1117"
+    android:background="#090D12"
+    android:fillViewport="true"
     tools:context=".ui.MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="AEGIS Agent"
-        android:textColor="#58A6FF"
-        android:textSize="32sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp"/>
+        android:orientation="vertical"
+        android:padding="20dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Mobile Security Library"
-        android:textColor="#8B949E"
-        android:textSize="14sp"
-        android:layout_marginBottom="48dp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="AEGIS"
+            android:textColor="#F4F8FB"
+            android:textSize="28sp"
+            android:textStyle="bold" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnStartScan"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Start Security Scan"
-        android:textColor="#0D1117"
-        android:backgroundTint="#58A6FF"
-        android:paddingHorizontal="32dp"
-        android:paddingVertical="12dp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Device Security Console"
+            android:textColor="#95A3B3"
+            android:textSize="14sp" />
 
-</LinearLayout>
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/statusCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            app:cardBackgroundColor="#141A22"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#95A3B3"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:id="@+id/txtStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Ready"
+                    android:textColor="#95A3B3"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/txtPostureHeadline"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="No scan saved yet"
+                    android:textColor="#F4F8FB"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/txtLastScan"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="--"
+                    android:textColor="#B9C4CF"
+                    android:textSize="13sp" />
+
+                <ProgressBar
+                    android:id="@+id/progressScan"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="6dp"
+                    android:layout_marginTop="16dp"
+                    android:indeterminate="true"
+                    android:visibility="gone" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnStartScan"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="18dp"
+                    android:text="Run Security Scan"
+                    android:textAllCaps="false"
+                    android:textColor="#071014"
+                    android:textStyle="bold"
+                    app:backgroundTint="#64D2FF"
+                    app:cornerRadius="8dp"
+                    app:icon="@android:drawable/ic_menu_search"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
+                    app:iconTint="#071014" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="112dp"
+                android:layout_marginEnd="7dp"
+                android:layout_weight="1"
+                app:cardBackgroundColor="#101820"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#203040"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Integrity"
+                        android:textColor="#95A3B3"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/txtIntegrityValue"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="--"
+                        android:textColor="#F4F8FB"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="112dp"
+                android:layout_marginStart="7dp"
+                android:layout_weight="1"
+                app:cardBackgroundColor="#101820"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#203040"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Root"
+                        android:textColor="#95A3B3"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/txtRootValue"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="--"
+                        android:textColor="#F4F8FB"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="112dp"
+                android:layout_marginEnd="7dp"
+                android:layout_weight="1"
+                app:cardBackgroundColor="#101820"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#203040"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Apps"
+                        android:textColor="#95A3B3"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/txtAppsValue"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="--"
+                        android:textColor="#F4F8FB"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_height="112dp"
+                android:layout_marginStart="7dp"
+                android:layout_weight="1"
+                app:cardBackgroundColor="#101820"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#203040"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Changed"
+                        android:textColor="#95A3B3"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/txtDeltaValue"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="--"
+                        android:textColor="#F4F8FB"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            app:cardBackgroundColor="#101820"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:strokeColor="#203040"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Saved Scan"
+                    android:textColor="#F4F8FB"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/txtPatchValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="--"
+                    android:textColor="#B9C4CF"
+                    android:textSize="14sp"
+                    tools:text="2026-04-05" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Security patch"
+                    android:textColor="#657182"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/txtBootloaderValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="--"
+                    android:textColor="#B9C4CF"
+                    android:textSize="14sp"
+                    tools:text="green" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Bootloader state"
+                    android:textColor="#657182"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/txtRecordValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="--"
+                    android:textColor="#B9C4CF"
+                    android:textSize="14sp"
+                    tools:text="#7 / manual" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Record"
+                    android:textColor="#657182"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/txtIntegrityDetailsValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="No Play Integrity request has been made yet."
+                    android:textColor="#B9C4CF"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Integrity details"
+                    android:textColor="#657182"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/txtErrorValue"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="None"
+                    android:textColor="#B9C4CF"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Last error"
+                    android:textColor="#657182"
+                    android:textSize="11sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+</ScrollView>

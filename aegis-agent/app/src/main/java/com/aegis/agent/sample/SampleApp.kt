@@ -27,6 +27,7 @@ class SampleApp : AegisApplication() {
                 enrollmentToken = "sample-token",
                 isByodMode      = false,
                 scanIntervalMin = 60L,
+                cloudProjectNumber = BuildConfig.AEGIS_CLOUD_PROJECT_NUMBER,
             )
         )
         Timber.d("SampleApp: AEGIS agent initialised")

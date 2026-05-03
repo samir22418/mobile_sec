@@ -1,0 +1,91 @@
+package com.aegis.agent.data.persistence
+
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import com.aegis.agent.domain.model.IntegrityVerdict
+import com.aegis.agent.domain.model.ScanRecord
+import com.aegis.agent.domain.model.ScanStatus
+import com.aegis.agent.domain.model.ScanTrigger
+
+@Entity(tableName = "scan_records")
+data class ScanRecordEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0L,
+
+    @ColumnInfo(name = "status")
+    val status: String,
+
+    @ColumnInfo(name = "trigger")
+    val trigger: String,
+
+    @ColumnInfo(name = "started_at_epoch_ms")
+    val startedAtEpochMs: Long,
+
+    @ColumnInfo(name = "completed_at_epoch_ms")
+    val completedAtEpochMs: Long? = null,
+
+    @ColumnInfo(name = "device_id")
+    val deviceId: String? = null,
+
+    @ColumnInfo(name = "is_rooted")
+    val isRooted: Boolean? = null,
+
+    @ColumnInfo(name = "integrity_verdict")
+    val integrityVerdict: String? = null,
+
+    @ColumnInfo(name = "integrity_details")
+    val integrityDetails: String? = null,
+
+    @ColumnInfo(name = "integrity_error_code")
+    val integrityErrorCode: Int? = null,
+
+    @ColumnInfo(name = "integrity_token_hash_sha256")
+    val integrityTokenHashSha256: String? = null,
+
+    @ColumnInfo(name = "security_patch_date")
+    val securityPatchDate: String? = null,
+
+    @ColumnInfo(name = "bootloader_state")
+    val bootloaderState: String? = null,
+
+    @ColumnInfo(name = "total_app_count")
+    val totalAppCount: Int? = null,
+
+    @ColumnInfo(name = "changed_app_count")
+    val changedAppCount: Int? = null,
+
+    @ColumnInfo(name = "is_app_delta")
+    val isAppDelta: Boolean? = null,
+
+    @ColumnInfo(name = "error_message")
+    val errorMessage: String? = null,
+
+    @ColumnInfo(name = "device_report_json")
+    val deviceReportJson: String? = null,
+
+    @ColumnInfo(name = "app_snapshot_json")
+    val appSnapshotJson: String? = null,
+) {
+    fun toDomain(): ScanRecord = ScanRecord(
+        id = id,
+        status = ScanStatus.fromValue(status),
+        trigger = ScanTrigger.fromValue(trigger),
+        startedAtEpochMs = startedAtEpochMs,
+        completedAtEpochMs = completedAtEpochMs,
+        deviceId = deviceId,
+        isRooted = isRooted,
+        integrityVerdict = integrityVerdict?.let { runCatching { IntegrityVerdict.valueOf(it) }.getOrNull() },
+        integrityDetails = integrityDetails,
+        integrityErrorCode = integrityErrorCode,
+        integrityTokenHashSha256 = integrityTokenHashSha256,
+        securityPatchDate = securityPatchDate,
+        bootloaderState = bootloaderState,
+        totalAppCount = totalAppCount,
+        changedAppCount = changedAppCount,
+        isAppDelta = isAppDelta,
+        errorMessage = errorMessage,
+        deviceReportJson = deviceReportJson,
+        appSnapshotJson = appSnapshotJson,
+    )
+}

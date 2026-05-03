@@ -1,60 +1,42 @@
 package com.aegis.agent.data.scanner
 
 import android.content.Context
+import com.aegis.agent.domain.model.IntegrityCheckResult
 import com.aegis.agent.domain.model.IntegrityVerdict
 import com.google.android.play.core.integrity.IntegrityManagerFactory
+import com.google.android.play.core.integrity.IntegrityServiceException
 import com.google.android.play.core.integrity.IntegrityTokenRequest
 import com.google.android.play.core.integrity.IntegrityTokenResponse
+import com.google.android.play.core.integrity.model.IntegrityErrorCode
 import kotlinx.coroutines.suspendCancellableCoroutine
 import timber.log.Timber
+import java.security.MessageDigest
 import kotlin.coroutines.resume
 
 /**
- * IntegrityApiClient — a **suspending** wrapper around the Google Play Integrity API.
+ * Suspending wrapper around Google Play Integrity.
  *
- * The Play Integrity SDK uses a callback-based API ([addOnSuccessListener] /
- * [addOnFailureListener]).  This class adapts that callback into a proper Kotlin
- * coroutine using [suspendCancellableCoroutine] so callers can use `await`-style
- * semantics without converting everything to RxJava or LiveData.
- *
- * **Coroutine cancellation:** The coroutine is cancellable — if the caller's scope
- * is cancelled while waiting for the Play Integrity response, the continuation is
- * abandoned (Google's Task does not have a cancel() API, but we at least stop
- * blocking the caller).
- *
- * **Backend verification:** The token returned here is a JWS (JSON Web Signature)
- * that MUST be verified server-side against Google's Play Integrity API.  Never
- * trust the local verdict label alone — a malicious app could fake it.
- *
- * @param context Application context (used to create the IntegrityManager)
- * @param cloudProjectNumber Your Google Cloud project number (numeric), obtained
- *   from the Google Play Console → Setup → API services.  Pass via [AgentConfig]
- *   or BuildConfig — never hard-code in source.
+ * The app client can request an encrypted token, but it cannot safely decode the
+ * final verdict. Production code must send the token to a trusted backend and
+ * call Google's decodeIntegrityToken flow there. This class therefore returns
+ * REQUIRES_BACKEND_VERIFICATION when a token is received successfully.
  */
 class IntegrityApiClient(
     private val context: Context,
     private val cloudProjectNumber: Long,
 ) {
 
-    /**
-     * Requests a Play Integrity token and maps the verdict labels in the decoded
-     * token payload into an [IntegrityVerdict] enum value.
-     *
-     * **Nonce requirement:** The nonce must be:
-     * - A Base64-encoded string (URL-safe, no padding)
-     * - At least 16 bytes of random data
-     * - Unique per request (to prevent replay attacks)
-     *
-     * In production the nonce should be a HMAC of deviceId + timestamp, or a
-     * server-issued challenge.  We pass it in so the caller can supply the right
-     * value per its security policy.
-     *
-     * @param nonce Base64url-encoded, server-generated nonce.
-     * @return [IntegrityVerdict] mapped from the strongest label in the response,
-     *         or [IntegrityVerdict.FAILS] if the API call fails or returns no label.
-     */
-    suspend fun queryIntegrity(nonce: String): IntegrityVerdict =
-        suspendCancellableCoroutine { continuation ->
+    suspend fun queryIntegrity(nonce: String): IntegrityCheckResult {
+        if (cloudProjectNumber <= 0L) {
+            return IntegrityCheckResult(
+                verdict = IntegrityVerdict.NOT_CONFIGURED,
+                details = "Play Integrity is not configured. Set AgentConfig.cloudProjectNumber to the Google Cloud project number where Play Integrity API is enabled.",
+            ).also {
+                Timber.w("IntegrityApiClient: missing cloudProjectNumber")
+            }
+        }
+
+        return suspendCancellableCoroutine { continuation ->
             val integrityManager = IntegrityManagerFactory.create(context)
 
             val tokenRequest = IntegrityTokenRequest.builder()
@@ -65,80 +47,104 @@ class IntegrityApiClient(
             integrityManager
                 .requestIntegrityToken(tokenRequest)
                 .addOnSuccessListener { response: IntegrityTokenResponse ->
-                    val verdict = mapVerdictFromToken(response.token())
-                    Timber.d("IntegrityApiClient: verdict=$verdict")
-                    // resume() is safe to call from any thread — the coroutine
-                    // dispatcher handles thread-hopping automatically.
-                    continuation.resume(verdict)
+                    val tokenHash = sha256(response.token())
+                    val result = IntegrityCheckResult(
+                        verdict = IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION,
+                        details = "Play Integrity token received. Send it to the backend and decode it there for MEETS_* or FAILS.",
+                        tokenHashSha256 = tokenHash,
+                    )
+                    Timber.i("IntegrityApiClient: token received hash=$tokenHash")
+                    if (continuation.isActive) continuation.resume(result)
                 }
                 .addOnFailureListener { exception ->
-                    Timber.w(exception as Throwable, "IntegrityApiClient: API call failed")
-                    // Map known error codes to a structured failure log, then
-                    // degrade gracefully with FAILS (backend will flag for review).
-                    logIntegrityError(exception)
-                    continuation.resume(IntegrityVerdict.FAILS)
+                    val result = mapFailure(exception)
+                    Timber.w(exception, "IntegrityApiClient: ${result.details}")
+                    if (continuation.isActive) continuation.resume(result)
                 }
-        }
-
-    // =========================================================================
-    // Verdict mapping
-    // =========================================================================
-
-    /**
-     * Maps the raw JWS token's device integrity labels to an [IntegrityVerdict].
-     *
-     * The Play Integrity verdict payload contains a `deviceIntegrity.deviceRecognitionVerdict`
-     * array.  Labels are cumulative — MEETS_STRONG_INTEGRITY also implies
-     * MEETS_DEVICE_INTEGRITY and MEETS_BASIC_INTEGRITY.
-     *
-     * Since the token must be decoded server-side for production use, this local
-     * mapping is a best-effort for immediate risk gating (e.g., block a UI action
-     * before the backend has processed the token).
-     *
-     * @param token The raw JWS token string from [IntegrityTokenResponse.token].
-     * @return The strongest applicable [IntegrityVerdict].
-     */
-    internal fun mapVerdictFromToken(token: String): IntegrityVerdict {
-        // The JWS payload is Base64url-encoded; decode the middle (payload) part.
-        return try {
-            val parts = token.split(".")
-            if (parts.size < 2) return IntegrityVerdict.FAILS
-
-            val payloadJson = String(
-                android.util.Base64.decode(
-                    parts[1],
-                    android.util.Base64.URL_SAFE or android.util.Base64.NO_PADDING
-                )
-            )
-
-            when {
-                payloadJson.contains("MEETS_STRONG_INTEGRITY") -> IntegrityVerdict.MEETS_STRONG_INTEGRITY
-                payloadJson.contains("MEETS_DEVICE_INTEGRITY") -> IntegrityVerdict.MEETS_DEVICE_INTEGRITY
-                payloadJson.contains("MEETS_BASIC_INTEGRITY")  -> IntegrityVerdict.MEETS_BASIC_INTEGRITY
-                else                                           -> IntegrityVerdict.FAILS
-            }
-        } catch (e: Exception) {
-            Timber.w(e, "IntegrityApiClient: failed to decode token payload")
-            IntegrityVerdict.FAILS
         }
     }
 
-    private fun logIntegrityError(exception: Exception) {
-        val msg = exception.message ?: "(no message)"
-        val description = when {
-            msg.contains("API_NOT_AVAILABLE", ignoreCase = true) ->
-                "Play Integrity API not available — device may not have Play Services"
-            msg.contains("PLAY_STORE_NOT_FOUND", ignoreCase = true) ->
-                "Play Store not found — sideloaded or work profile without Play"
-            msg.contains("NETWORK_ERROR", ignoreCase = true) ->
-                "Network error — offline or captive portal"
-            msg.contains("APP_NOT_INSTALLED", ignoreCase = true) ->
-                "App not recognized by Play — first-run or sideload scenario"
-            msg.contains("TOO_MANY_REQUESTS", ignoreCase = true) ->
-                "Rate limited — too many integrity requests"
-            else ->
-                "Unknown integrity error: $msg"
+    /**
+     * Maps a backend-decoded payload JSON into the local enum.
+     *
+     * This helper is only for tests or future backend response handling. It must
+     * not be used on the encrypted token returned directly to the Android client.
+     */
+    internal fun mapDecodedPayloadToVerdict(payloadJson: String): IntegrityVerdict =
+        when {
+            payloadJson.contains("MEETS_STRONG_INTEGRITY") -> IntegrityVerdict.MEETS_STRONG_INTEGRITY
+            payloadJson.contains("MEETS_DEVICE_INTEGRITY") -> IntegrityVerdict.MEETS_DEVICE_INTEGRITY
+            payloadJson.contains("MEETS_BASIC_INTEGRITY") -> IntegrityVerdict.MEETS_BASIC_INTEGRITY
+            else -> IntegrityVerdict.FAILS
         }
-        Timber.w("IntegrityApiClient: $description")
+
+    private fun mapFailure(exception: Exception): IntegrityCheckResult {
+        val errorCode = (exception as? IntegrityServiceException)?.errorCode
+        val verdict = when (errorCode) {
+            IntegrityErrorCode.CLOUD_PROJECT_NUMBER_IS_INVALID -> IntegrityVerdict.NOT_CONFIGURED
+            IntegrityErrorCode.API_NOT_AVAILABLE,
+            IntegrityErrorCode.PLAY_STORE_NOT_FOUND,
+            IntegrityErrorCode.PLAY_STORE_VERSION_OUTDATED,
+            IntegrityErrorCode.PLAY_SERVICES_NOT_FOUND,
+            IntegrityErrorCode.PLAY_SERVICES_VERSION_OUTDATED,
+            IntegrityErrorCode.CANNOT_BIND_TO_SERVICE -> IntegrityVerdict.UNAVAILABLE
+            IntegrityErrorCode.NETWORK_ERROR,
+            IntegrityErrorCode.TOO_MANY_REQUESTS,
+            IntegrityErrorCode.GOOGLE_SERVER_UNAVAILABLE,
+            IntegrityErrorCode.INTERNAL_ERROR,
+            IntegrityErrorCode.CLIENT_TRANSIENT_ERROR -> IntegrityVerdict.API_ERROR
+            else -> IntegrityVerdict.FAILS
+        }
+
+        return IntegrityCheckResult(
+            verdict = verdict,
+            details = describeFailure(errorCode, exception),
+            errorCode = errorCode,
+        )
+    }
+
+    private fun describeFailure(errorCode: Int?, exception: Exception): String =
+        when (errorCode) {
+            IntegrityErrorCode.API_NOT_AVAILABLE ->
+                "Play Integrity API is unavailable. Enable it in Play Console and update Play Store."
+            IntegrityErrorCode.PLAY_STORE_NOT_FOUND ->
+                "Official Google Play Store is missing or unavailable on this device."
+            IntegrityErrorCode.PLAY_STORE_VERSION_OUTDATED ->
+                "Google Play Store is outdated. Update Play Store and retry."
+            IntegrityErrorCode.PLAY_SERVICES_NOT_FOUND ->
+                "Google Play services are missing or too old on this device."
+            IntegrityErrorCode.PLAY_SERVICES_VERSION_OUTDATED ->
+                "Google Play services are outdated. Update Google Play services and retry."
+            IntegrityErrorCode.PLAY_STORE_ACCOUNT_NOT_FOUND ->
+                "No Play Store account is available on this device."
+            IntegrityErrorCode.CANNOT_BIND_TO_SERVICE ->
+                "Play Integrity could not bind to Play Store services. Update Play Store and retry."
+            IntegrityErrorCode.CLOUD_PROJECT_NUMBER_IS_INVALID ->
+                "Cloud project number is invalid. Use the numeric Google Cloud project number with Play Integrity enabled."
+            IntegrityErrorCode.NETWORK_ERROR ->
+                "Network is unavailable. Connect the device to the internet and retry."
+            IntegrityErrorCode.TOO_MANY_REQUESTS ->
+                "Play Integrity request was rate limited. Retry later."
+            IntegrityErrorCode.GOOGLE_SERVER_UNAVAILABLE,
+            IntegrityErrorCode.INTERNAL_ERROR,
+            IntegrityErrorCode.CLIENT_TRANSIENT_ERROR ->
+                "Temporary Play Integrity service error. Retry with backoff."
+            IntegrityErrorCode.NONCE_IS_NOT_BASE64 ->
+                "Nonce is not Base64 web-safe encoded."
+            IntegrityErrorCode.NONCE_TOO_SHORT ->
+                "Nonce is too short. It must be at least 16 bytes before Base64 encoding."
+            IntegrityErrorCode.NONCE_TOO_LONG ->
+                "Nonce is too long. It must be less than 500 bytes before Base64 encoding."
+            IntegrityErrorCode.APP_NOT_INSTALLED ->
+                "Play Integrity reports the calling app is not installed."
+            IntegrityErrorCode.APP_UID_MISMATCH ->
+                "Play Integrity reports the calling app UID does not match Package Manager."
+            else ->
+                "Play Integrity failed: ${exception.message ?: exception::class.java.simpleName}"
+        }
+
+    private fun sha256(value: String): String {
+        val digest = MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8))
+        return digest.joinToString(separator = "") { byte -> "%02x".format(byte) }
     }
 }

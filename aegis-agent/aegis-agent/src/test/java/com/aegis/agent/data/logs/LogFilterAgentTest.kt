@@ -313,7 +313,7 @@ class LogFilterAgentTest {
                 logcatReader = mockReader,
                 filter       = filter,
                 deviceId     = "test-device-001",
-                scope        = testScope,
+                scope        = testScope.backgroundScope,
             )
         }
 
@@ -396,7 +396,7 @@ class LogFilterAgentTest {
         @DisplayName("ImportantLog contains correct fields after filter pass")
         fun `ImportantLog fields are correctly populated`() = testScope.runTest {
             every { mockReader.lines() } returns flowOf(
-                RawLogLine(LogLevel.ERROR, "AuthService", "failed login for user admin", "raw")
+                RawLogLine(LogLevel.ERROR, "ActivityManager", "failed login for user admin", "raw")
             )
 
             val batches = mutableListOf<List<ImportantLog>>()
@@ -411,7 +411,7 @@ class LogFilterAgentTest {
             val log = batches.firstOrNull()?.firstOrNull()
             assertNotNull(log)
             assertEquals("test-device-001", log!!.deviceId)
-            assertEquals("AuthService", log.tag)
+            assertEquals("ActivityManager", log.tag)
             assertEquals(LogLevel.ERROR, log.level)
             // LEVEL rule fires before THREAT_REGEX for ERROR level
             assertEquals(MatchedRule.LEVEL_ERROR_OR_ASSERT, log.matchedRule)
@@ -444,7 +444,6 @@ class LogFilterAgentTest {
         @DisplayName("THREAT_PATTERNS contains all 7 required threat indicators")
         fun `THREAT_PATTERNS contains all required patterns`() {
             val patterns = ImportanceFilter.THREAT_PATTERNS
-            val patternString = patterns.joinToString("|")
             // Verify each category is covered:
             assertTrue(patterns.any { "permission" in it.lowercase() },  "Missing permission pattern")
             assertTrue(patterns.any { "root" in it.lowercase() },        "Missing root pattern")
