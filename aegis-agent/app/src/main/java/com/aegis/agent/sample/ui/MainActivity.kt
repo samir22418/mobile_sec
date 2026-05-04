@@ -210,7 +210,7 @@ class MainActivity : AppCompatActivity() {
         binding.txtPostureHeadline.text = when {
             record.isRooted == true -> "Root signals detected"
             record.integrityVerdict == IntegrityVerdict.FAILS -> "Integrity check failed"
-            record.integrityVerdict == IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION -> "Integrity token saved"
+            record.integrityVerdict == IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION -> "Integrity verification pending"
             record.integrityVerdict == IntegrityVerdict.NOT_CONFIGURED -> "Integrity setup needed"
             record.integrityVerdict == IntegrityVerdict.UNAVAILABLE -> "Integrity unavailable"
             record.integrityVerdict == IntegrityVerdict.API_ERROR -> "Integrity retry needed"
@@ -400,7 +400,7 @@ class MainActivity : AppCompatActivity() {
             IntegrityVerdict.MEETS_DEVICE_INTEGRITY -> "Device"
             IntegrityVerdict.MEETS_BASIC_INTEGRITY -> "Basic"
             IntegrityVerdict.FAILS -> "Failed"
-            IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION -> "Token saved"
+            IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION -> "Verification pending"
             IntegrityVerdict.NOT_CONFIGURED -> "Not configured"
             IntegrityVerdict.UNAVAILABLE -> "Unavailable"
             IntegrityVerdict.API_ERROR -> "API error"
@@ -457,7 +457,7 @@ class MainActivity : AppCompatActivity() {
             appendLine("important_log_count=${record.importantLogCount}")
             appendLine("total_app_count=${record.totalAppCount ?: "--"}")
             appendLine("changed_app_count=${record.changedAppCount ?: "--"}")
-            appendLine("integrity=${record.integrityVerdict?.name ?: "--"}")
+            appendLine("integrity=${record.integrityVerdict?.let { displayIntegrity(it) } ?: "--"}")
             appendLine("rooted=${record.isRooted ?: "--"}")
             append(brief.analystText)
         }

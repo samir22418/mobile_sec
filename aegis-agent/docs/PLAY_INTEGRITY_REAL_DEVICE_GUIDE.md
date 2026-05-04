@@ -95,9 +95,9 @@ Without a cloud project number:
 With a valid cloud project number and device support:
 
 - Status: `Complete`
-- Integrity: `Token saved`
-- Headline: `Integrity token saved`
-- Details: tells you backend verification is required
+- Integrity: `Verification pending`
+- Headline: `Integrity verification pending`
+- Details: tells you backend verification is required before trusting the device
 
 With Play Store or Play services missing/outdated:
 

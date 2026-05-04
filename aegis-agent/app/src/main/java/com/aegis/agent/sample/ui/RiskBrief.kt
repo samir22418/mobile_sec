@@ -63,7 +63,7 @@ data class RiskBrief(
                 }
                 IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION -> {
                     score += 18
-                    reasons += "Play Integrity token still needs trusted backend verification."
+                    reasons += "Device verification is not complete yet."
                 }
                 IntegrityVerdict.NOT_CONFIGURED -> {
                     score += 18
@@ -136,7 +136,7 @@ data class RiskBrief(
                 record.uploadStatus == UploadStatus.FAILED -> "Check failed upload error and wait for retry."
                 record.uploadStatus == UploadStatus.PENDING -> "Wait for automatic upload retry."
                 record.isRooted == true -> "Review root indicators before trusting this device."
-                record.integrityVerdict == IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION -> "Send this scan to backend verification."
+                record.integrityVerdict == IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION -> "Wait for backend verification before trusting this device."
                 record.integrityVerdict == IntegrityVerdict.NOT_CONFIGURED -> "Configure Play Integrity for stronger verdicts."
                 boundedScore >= 50 -> "Review the analyst brief and raw evidence."
                 else -> "No action needed for the local POC view."

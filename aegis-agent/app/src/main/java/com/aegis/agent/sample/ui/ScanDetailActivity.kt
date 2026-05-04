@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.aegis.agent.data.persistence.ScanResultRepository
+import com.aegis.agent.domain.model.IntegrityVerdict
 import com.aegis.agent.domain.model.ScanRecord
 import com.aegis.agent.sample.databinding.ActivityScanDetailBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -101,7 +102,7 @@ class ScanDetailActivity : AppCompatActivity() {
         binding.txtCompletedAt.text = formatTime(record.completedAtEpochMs)
         binding.txtDeviceId.text = record.deviceId ?: "--"
         binding.txtRooted.text = record.isRooted?.toString() ?: "--"
-        binding.txtIntegrity.text = record.integrityVerdict?.name ?: "--"
+        binding.txtIntegrity.text = record.integrityVerdict?.let { displayIntegrity(it) } ?: "--"
         binding.txtPatch.text = record.securityPatchDate ?: "--"
         binding.txtBootloader.text = record.bootloaderState ?: "--"
         binding.txtApps.text = record.totalAppCount?.toString() ?: "--"
@@ -191,7 +192,7 @@ class ScanDetailActivity : AppCompatActivity() {
             appendLine("important_log_count=${record.importantLogCount}")
             appendLine("total_app_count=${record.totalAppCount ?: "--"}")
             appendLine("changed_app_count=${record.changedAppCount ?: "--"}")
-            appendLine("integrity=${record.integrityVerdict?.name ?: "--"}")
+            appendLine("integrity=${record.integrityVerdict?.let { displayIntegrity(it) } ?: "--"}")
             appendLine("rooted=${record.isRooted ?: "--"}")
             append(brief.analystText)
         }
@@ -220,6 +221,18 @@ class ScanDetailActivity : AppCompatActivity() {
 
     private fun formatTime(epochMs: Long?): String =
         epochMs?.let { dateFormat.format(Date(it)) } ?: "--"
+
+    private fun displayIntegrity(verdict: IntegrityVerdict): String =
+        when (verdict) {
+            IntegrityVerdict.MEETS_STRONG_INTEGRITY -> "Strong"
+            IntegrityVerdict.MEETS_DEVICE_INTEGRITY -> "Device"
+            IntegrityVerdict.MEETS_BASIC_INTEGRITY -> "Basic"
+            IntegrityVerdict.FAILS -> "Failed"
+            IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION -> "Verification pending"
+            IntegrityVerdict.NOT_CONFIGURED -> "Not configured"
+            IntegrityVerdict.UNAVAILABLE -> "Unavailable"
+            IntegrityVerdict.API_ERROR -> "API error"
+        }
 
     companion object {
         private const val EXTRA_SCAN_ID = "com.aegis.agent.sample.EXTRA_SCAN_ID"
