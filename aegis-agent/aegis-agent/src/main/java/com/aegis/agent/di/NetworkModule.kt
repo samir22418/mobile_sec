@@ -46,11 +46,6 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(): OkHttpClient {
-        val certificatePinner = CertificatePinner.Builder()
-            .add(AEGIS_BACKEND_HOST, PIN_LEAF)
-            .add(AEGIS_BACKEND_HOST, PIN_BACKUP)
-            .build()
-
         val loggingInterceptor = HttpLoggingInterceptor { message ->
             Timber.tag("OkHttp").d(message)
         }.apply {
@@ -62,13 +57,29 @@ object NetworkModule {
         }
 
         return OkHttpClient.Builder()
-            .certificatePinner(certificatePinner)
+            .applyCertificatePinningIfConfigured()
             .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS) // APK metadata uploads can be large
             .retryOnConnectionFailure(true)
             .build()
+    }
+
+    private fun OkHttpClient.Builder.applyCertificatePinningIfConfigured(): OkHttpClient.Builder {
+        val configuredPins = listOf(PIN_LEAF, PIN_BACKUP)
+            .filterNot { it.contains("REPLACE_WITH_REAL") }
+
+        if (configuredPins.isEmpty()) {
+            Timber.w("NetworkModule: certificate pinning disabled until real pins are configured")
+            return this
+        }
+
+        val certificatePinner = CertificatePinner.Builder().apply {
+            configuredPins.forEach { pin -> add(AEGIS_BACKEND_HOST, pin) }
+        }.build()
+
+        return certificatePinner(certificatePinner)
     }
 
     @Provides

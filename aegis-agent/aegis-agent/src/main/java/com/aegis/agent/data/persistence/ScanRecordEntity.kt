@@ -7,6 +7,7 @@ import com.aegis.agent.domain.model.IntegrityVerdict
 import com.aegis.agent.domain.model.ScanRecord
 import com.aegis.agent.domain.model.ScanStatus
 import com.aegis.agent.domain.model.ScanTrigger
+import com.aegis.agent.domain.model.UploadStatus
 
 @Entity(tableName = "scan_records")
 data class ScanRecordEntity(
@@ -24,6 +25,27 @@ data class ScanRecordEntity(
 
     @ColumnInfo(name = "completed_at_epoch_ms")
     val completedAtEpochMs: Long? = null,
+
+    @ColumnInfo(name = "payload_id")
+    val payloadId: String? = null,
+
+    @ColumnInfo(name = "payload_created_at_epoch_ms")
+    val payloadCreatedAtEpochMs: Long? = null,
+
+    @ColumnInfo(name = "upload_status")
+    val uploadStatus: String = UploadStatus.NOT_READY.name,
+
+    @ColumnInfo(name = "retry_count")
+    val retryCount: Int = 0,
+
+    @ColumnInfo(name = "last_upload_attempt_at_epoch_ms")
+    val lastUploadAttemptAtEpochMs: Long? = null,
+
+    @ColumnInfo(name = "last_upload_error")
+    val lastUploadError: String? = null,
+
+    @ColumnInfo(name = "uploaded_at_epoch_ms")
+    val uploadedAtEpochMs: Long? = null,
 
     @ColumnInfo(name = "device_id")
     val deviceId: String? = null,
@@ -58,6 +80,9 @@ data class ScanRecordEntity(
     @ColumnInfo(name = "is_app_delta")
     val isAppDelta: Boolean? = null,
 
+    @ColumnInfo(name = "important_log_count")
+    val importantLogCount: Int = 0,
+
     @ColumnInfo(name = "error_message")
     val errorMessage: String? = null,
 
@@ -66,6 +91,9 @@ data class ScanRecordEntity(
 
     @ColumnInfo(name = "app_snapshot_json")
     val appSnapshotJson: String? = null,
+
+    @ColumnInfo(name = "important_logs_json")
+    val importantLogsJson: String? = null,
 ) {
     fun toDomain(): ScanRecord = ScanRecord(
         id = id,
@@ -73,6 +101,13 @@ data class ScanRecordEntity(
         trigger = ScanTrigger.fromValue(trigger),
         startedAtEpochMs = startedAtEpochMs,
         completedAtEpochMs = completedAtEpochMs,
+        payloadId = payloadId,
+        payloadCreatedAtEpochMs = payloadCreatedAtEpochMs,
+        uploadStatus = UploadStatus.fromValue(uploadStatus),
+        retryCount = retryCount,
+        lastUploadAttemptAtEpochMs = lastUploadAttemptAtEpochMs,
+        lastUploadError = lastUploadError,
+        uploadedAtEpochMs = uploadedAtEpochMs,
         deviceId = deviceId,
         isRooted = isRooted,
         integrityVerdict = integrityVerdict?.let { runCatching { IntegrityVerdict.valueOf(it) }.getOrNull() },
@@ -84,8 +119,10 @@ data class ScanRecordEntity(
         totalAppCount = totalAppCount,
         changedAppCount = changedAppCount,
         isAppDelta = isAppDelta,
+        importantLogCount = importantLogCount,
         errorMessage = errorMessage,
         deviceReportJson = deviceReportJson,
         appSnapshotJson = appSnapshotJson,
+        importantLogsJson = importantLogsJson,
     )
 }

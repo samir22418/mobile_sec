@@ -20,6 +20,15 @@ val aegisCloudProjectNumber = (
         ?: "0"
 ).trim().toLongOrNull() ?: 0L
 
+val aegisBackendUrl = (
+    localProperties.getProperty("AEGIS_BACKEND_URL")
+        ?: providers.gradleProperty("AEGIS_BACKEND_URL").orNull
+        ?: "https://api.aegis.internal"
+).trim()
+
+fun String.asBuildConfigString(): String =
+    "\"" + replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+
 android {
     namespace = "com.aegis.agent.sample"
     compileSdk = 34
@@ -31,6 +40,7 @@ android {
         versionCode = 1
         versionName = "1.0"
         buildConfigField("long", "AEGIS_CLOUD_PROJECT_NUMBER", "${aegisCloudProjectNumber}L")
+        buildConfigField("String", "AEGIS_BACKEND_URL", aegisBackendUrl.asBuildConfigString())
     }
 
     buildTypes {
@@ -67,6 +77,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.kotlinx.serialization.json)
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 

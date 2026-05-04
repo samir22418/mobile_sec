@@ -3,6 +3,7 @@ package com.aegis.agent.data.logs
 import com.aegis.agent.domain.model.ImportantLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -204,6 +205,42 @@ class LogFilterAgent @Inject constructor(
      */
     suspend fun bufferedCount(): Int = bufferMutex.withLock { buffer.size }
 
+    /**
+     * Starts a short worker-scoped log collection window and returns a bounded
+     * snapshot of important logs.
+     *
+     * This is the POC lifecycle used by [TelemetrySyncWorker]: collect around a
+     * scan run, persist the selected lines with that scan, then stop the reader.
+     * A future enterprise build can keep [start] running from a service instead.
+     */
+    suspend fun collectSnapshot(
+        windowMs: Long = SNAPSHOT_WINDOW_MS,
+        maxEntries: Int = SNAPSHOT_MAX_SIZE,
+    ): List<ImportantLog> = coroutineScope {
+        val collected = mutableListOf<ImportantLog>()
+        val collectorJob = launch {
+            filteredLogs.collect { batch ->
+                val remaining = maxEntries - collected.size
+                if (remaining > 0) {
+                    collected += batch.take(remaining)
+                }
+            }
+        }
+
+        try {
+            start()
+            delay(windowMs)
+            val remaining = maxEntries - collected.size
+            if (remaining > 0) {
+                collected += drainBuffer(remaining)
+            }
+            collected.toList()
+        } finally {
+            collectorJob.cancel()
+            stop()
+        }
+    }
+
     // =========================================================================
     // Internal flush logic
     // =========================================================================
@@ -217,26 +254,30 @@ class LogFilterAgent @Inject constructor(
      * serialised safely.
      */
     internal suspend fun flushBuffer() {
-        val batch: List<ImportantLog> = bufferMutex.withLock {
-            if (buffer.isEmpty()) return@withLock emptyList()
-
-            val cutoffMs = System.currentTimeMillis() - BUFFER_TTL_MS
-            // Remove expired entries (TTL eviction)
-            buffer.removeAll { log -> log.timestampEpochMs < cutoffMs }
-
-            if (buffer.isEmpty()) return@withLock emptyList()
-
-            // Drain all remaining entries into the batch
-            val batch = buffer.toList()
-            buffer.clear()
-            batch
-        }
+        val batch = drainBuffer(maxEntries = Int.MAX_VALUE)
 
         if (batch.isNotEmpty()) {
             Timber.i("LogFilterAgent: flushing ${batch.size} log entries")
             _filteredLogs.emit(batch)
         }
     }
+
+    private suspend fun drainBuffer(maxEntries: Int): List<ImportantLog> =
+        bufferMutex.withLock {
+            if (buffer.isEmpty() || maxEntries <= 0) return@withLock emptyList()
+
+            val cutoffMs = System.currentTimeMillis() - BUFFER_TTL_MS
+            buffer.removeAll { log -> log.timestampEpochMs < cutoffMs }
+
+            if (buffer.isEmpty()) return@withLock emptyList()
+
+            val batchSize = minOf(maxEntries, buffer.size)
+            buildList(batchSize) {
+                repeat(batchSize) {
+                    add(buffer.removeFirst())
+                }
+            }
+        }
 
     // =========================================================================
     // Constants
@@ -254,5 +295,11 @@ class LogFilterAgent @Inject constructor(
 
         /** Maximum age of a buffered entry before it is evicted on next flush (10 minutes). */
         const val BUFFER_TTL_MS     = 10 * 60 * 1_000L   // 10 minutes in milliseconds
+
+        /** Short worker-scoped capture window used by telemetry scans. */
+        const val SNAPSHOT_WINDOW_MS = 2_000L
+
+        /** Maximum logs attached to one telemetry payload. */
+        const val SNAPSHOT_MAX_SIZE = 50
     }
 }

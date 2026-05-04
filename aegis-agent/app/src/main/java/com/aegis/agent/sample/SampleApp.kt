@@ -22,7 +22,7 @@ class SampleApp : AegisApplication() {
         AegisSdk.init(
             context = this,
             config = AgentConfig(
-                backendUrl      = "https://api.aegis.internal",
+                backendUrl      = BuildConfig.AEGIS_BACKEND_URL,
                 deviceId        = "sample-device-001",
                 enrollmentToken = "sample-token",
                 isByodMode      = false,

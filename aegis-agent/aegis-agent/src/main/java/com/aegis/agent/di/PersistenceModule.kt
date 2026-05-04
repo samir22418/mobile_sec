@@ -25,7 +25,12 @@ object PersistenceModule {
             context,
             AegisDatabase::class.java,
             ScanResultRepository.DATABASE_NAME,
-        ).addMigrations(AegisDatabase.MIGRATION_1_2)
+        ).addMigrations(
+            AegisDatabase.MIGRATION_1_2,
+            AegisDatabase.MIGRATION_2_3,
+            AegisDatabase.MIGRATION_3_4,
+            AegisDatabase.MIGRATION_4_5,
+        )
             .build()
 
     @Provides

@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.aegis.agent.data.apps.AppIntelligenceCollector
+import com.aegis.agent.data.persistence.ConfigRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,8 +33,9 @@ private val Context.appInventoryDataStore: DataStore<Preferences> by preferences
  * prevent key collisions.
  *
  * ## isByodMode binding
- * The BYOD flag is read from [AgentConfigHolder] at provide-time, mirroring the
- * same pattern used by [ScannerModule] for deviceId and cloudProjectNumber.
+ * The BYOD flag is read from [AgentConfigHolder] or encrypted persisted config,
+ * mirroring the same pattern used by [ScannerModule] for deviceId and
+ * cloudProjectNumber.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -62,8 +64,10 @@ object AppModule {
      */
     @Provides
     @Named("isByodMode")
-    fun provideIsByodMode(): Boolean =
-        AgentConfigHolder.config?.isByodMode ?: false
+    fun provideIsByodMode(
+        configRepository: ConfigRepository,
+    ): Boolean =
+        AgentConfigHolder.getOrLoad(configRepository)?.isByodMode ?: false
 
     /**
      * Provides the fully-wired [AppIntelligenceCollector] as a singleton.

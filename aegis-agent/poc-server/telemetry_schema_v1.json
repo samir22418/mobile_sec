@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aegis.local/schema/telemetry_payload_v1.json",
+  "title": "AEGIS Telemetry Payload v1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "payload_id",
+    "scan_id",
+    "device_id",
+    "created_at_epoch_ms",
+    "enrollment_token",
+    "device_report",
+    "app_snapshot",
+    "important_logs"
+  ],
+  "properties": {
+    "payload_id": {
+      "type": "string",
+      "description": "Stable idempotency key for this scan payload."
+    },
+    "scan_id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "device_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at_epoch_ms": {
+      "type": "integer"
+    },
+    "enrollment_token": {
+      "type": "string",
+      "description": "POC enrollment credential. Production should move this to Authorization or mTLS."
+    },
+    "device_report": {
+      "$ref": "#/$defs/device_report"
+    },
+    "app_snapshot": {
+      "$ref": "#/$defs/app_snapshot"
+    },
+    "important_logs": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "$ref": "#/$defs/important_log"
+      }
+    }
+  },
+  "$defs": {
+    "device_report": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "device_id",
+        "timestamp_epoch_ms",
+        "root_detection",
+        "integrity_verdict",
+        "security_patch_date",
+        "bootloader_state"
+      ],
+      "properties": {
+        "device_id": {
+          "type": "string"
+        },
+        "timestamp_epoch_ms": {
+          "type": "integer"
+        },
+        "root_detection": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "su_binary_found",
+            "test_keys_found",
+            "superuser_apk_found",
+            "is_rooted"
+          ],
+          "properties": {
+            "su_binary_found": {
+              "type": "boolean"
+            },
+            "test_keys_found": {
+              "type": "boolean"
+            },
+            "superuser_apk_found": {
+              "type": "boolean"
+            },
+            "is_rooted": {
+              "type": "boolean"
+            }
+          }
+        },
+        "integrity_verdict": {
+          "type": "string",
+          "enum": [
+            "MEETS_STRONG_INTEGRITY",
+            "MEETS_DEVICE_INTEGRITY",
+            "MEETS_BASIC_INTEGRITY",
+            "FAILS",
+            "REQUIRES_BACKEND_VERIFICATION",
+            "NOT_CONFIGURED",
+            "UNAVAILABLE",
+            "API_ERROR"
+          ]
+        },
+        "integrity_details": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "integrity_error_code": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "integrity_token_hash_sha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "security_patch_date": {
+          "type": "string"
+        },
+        "bootloader_state": {
+          "type": "string"
+        }
+      }
+    },
+    "app_snapshot": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "device_id",
+        "timestamp_epoch_ms",
+        "total_app_count",
+        "is_delta",
+        "apps"
+      ],
+      "properties": {
+        "device_id": {
+          "type": "string"
+        },
+        "timestamp_epoch_ms": {
+          "type": "integer"
+        },
+        "total_app_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "is_delta": {
+          "type": "boolean"
+        },
+        "apps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/app_info"
+          }
+        }
+      }
+    },
+    "app_info": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "package_name",
+        "version_code",
+        "requested_permissions",
+        "install_source",
+        "is_system_app",
+        "first_install_time",
+        "last_update_time"
+      ],
+      "properties": {
+        "package_name": {
+          "type": "string"
+        },
+        "version_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "version_code": {
+          "type": "integer"
+        },
+        "apk_sha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cert_sha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "requested_permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "install_source": {
+          "type": "string",
+          "enum": [
+            "PLAY_STORE",
+            "MDM",
+            "SIDELOADED",
+            "UNKNOWN"
+          ]
+        },
+        "is_system_app": {
+          "type": "boolean"
+        },
+        "first_install_time": {
+          "type": "integer"
+        },
+        "last_update_time": {
+          "type": "integer"
+        }
+      }
+    },
+    "important_log": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "id",
+        "timestamp_epoch_ms",
+        "device_id",
+        "tag",
+        "level",
+        "message",
+        "matched_rule"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "timestamp_epoch_ms": {
+          "type": "integer"
+        },
+        "device_id": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "VERBOSE",
+            "DEBUG",
+            "INFO",
+            "WARN",
+            "ERROR",
+            "ASSERT",
+            "UNKNOWN"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "matched_rule": {
+          "type": "string",
+          "enum": [
+            "TAG_KEYWORD",
+            "LEVEL_ERROR_OR_ASSERT",
+            "THREAT_REGEX"
+          ]
+        }
+      }
+    }
+  }
+}

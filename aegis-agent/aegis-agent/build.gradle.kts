@@ -77,6 +77,9 @@ dependencies {
     // DataStore — persistent key-value storage
     implementation(libs.androidx.datastore.preferences)
 
+    // Security Crypto — encrypted config persistence
+    implementation(libs.androidx.security.crypto)
+
     // Room — durable scan result history
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
@@ -107,6 +110,7 @@ dependencies {
     testRuntimeOnly(libs.junit5.engine)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.okhttp.mockwebserver)
 
     // Android Testing
     androidTestImplementation(libs.mockk.android)

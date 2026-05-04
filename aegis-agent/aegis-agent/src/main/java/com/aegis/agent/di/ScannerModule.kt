@@ -1,6 +1,7 @@
 package com.aegis.agent.di
 
 import android.content.Context
+import com.aegis.agent.data.persistence.ConfigRepository
 import com.aegis.agent.data.scanner.DeviceScanner
 import com.aegis.agent.data.scanner.IntegrityApiClient
 import com.aegis.agent.data.scanner.RootDetector
@@ -22,12 +23,8 @@ import javax.inject.Singleton
  *
  * **How to provide AgentConfig values:**
  * The [AgentConfig] is passed to [AegisSdk.init] at runtime, but Hilt modules are
- * static.  We bridge the gap by storing the config in a [AgentConfigHolder] singleton
- * that is populated during [AegisSdk.init].  The `@Named` bindings read from there.
- *
- * For the initial scaffold we use default / placeholder values.  Replace
- * [AgentConfigHolder.config] injection with a runtime-provisioned source once the
- * MDM integration layer (Prompt 2.x) is in place.
+ * static.  We bridge the gap by storing the config in [AgentConfigHolder] during
+ * [AegisSdk.init] and falling back to [ConfigRepository] after process restart.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -66,8 +63,10 @@ object ScannerModule {
      */
     @Provides
     @Named("cloudProjectNumber")
-    fun provideCloudProjectNumber(): Long =
-        AgentConfigHolder.config?.cloudProjectNumber ?: 0L
+    fun provideCloudProjectNumber(
+        configRepository: ConfigRepository,
+    ): Long =
+        AgentConfigHolder.getOrLoad(configRepository)?.cloudProjectNumber ?: 0L
 
     /**
      * Provides the device ID from [AgentConfigHolder].
@@ -76,8 +75,10 @@ object ScannerModule {
      */
     @Provides
     @Named("deviceId")
-    fun provideDeviceId(): String =
-        AgentConfigHolder.config?.deviceId ?: "unprovisioned"
+    fun provideDeviceId(
+        configRepository: ConfigRepository,
+    ): String =
+        AgentConfigHolder.getOrLoad(configRepository)?.deviceId ?: "unprovisioned"
 
     /**
      * Provides the fully-wired [DeviceScanner].
@@ -101,12 +102,16 @@ object ScannerModule {
  * AgentConfigHolder — a simple thread-safe holder for the runtime [AgentConfig].
  *
  * Populated by [AegisSdk.init] before any Hilt-managed component first requests
- * a [DeviceScanner].  Using `@Volatile` ensures visibility across threads
- * without the overhead of a full lock.
- *
- * Extend with a proper datastore or DI-aware provisioning source in Phase 2.
+ * a [DeviceScanner]. If the process was restarted, providers can restore the
+ * value from [ConfigRepository]. Using `@Volatile` ensures visibility across
+ * threads without the overhead of a full lock.
  */
 object AgentConfigHolder {
     @Volatile
     var config: AgentConfig? = null
+
+    fun getOrLoad(configRepository: ConfigRepository): AgentConfig? {
+        config?.let { return it }
+        return configRepository.load()?.also { config = it }
+    }
 }

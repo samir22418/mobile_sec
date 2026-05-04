@@ -4,17 +4,14 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.aegis.agent.AegisSdk
-import com.aegis.agent.di.AgentConfigHolder
 import timber.log.Timber
 
 /**
  * Handles system lifecycle broadcasts that can interrupt the WorkManager
  * schedule, such as device reboot or app package replacement.
  *
- * Agent configuration is currently held in memory by AgentConfigHolder. This
- * receiver can therefore reschedule immediately only when the host app has
- * initialized AegisSdk in the current process. Persisted provisioning belongs
- * to the next backend/enrollment stage.
+ * Agent configuration is restored from encrypted local storage when available,
+ * so the schedule can be verified without waiting for the host app to call init.
  */
 class BootReceiver : BroadcastReceiver() {
 
@@ -28,16 +25,10 @@ class BootReceiver : BroadcastReceiver() {
     }
 
     private fun rescheduleIfConfigured(context: Context) {
-        val config = AgentConfigHolder.config
-        if (config == null) {
-            Timber.w(
-                "BootReceiver: AEGIS config is not available yet; " +
-                    "host Application must call AegisSdk.init()"
-            )
-            return
+        if (AegisSdk.initFromPersistedConfig(context.applicationContext)) {
+            Timber.i("BootReceiver: AEGIS schedule restored from persisted config")
+        } else {
+            Timber.w("BootReceiver: no persisted AEGIS config available; schedule not restored")
         }
-
-        AegisSdk.init(context.applicationContext, config)
-        Timber.i("BootReceiver: AEGIS schedule verified after system broadcast")
     }
 }

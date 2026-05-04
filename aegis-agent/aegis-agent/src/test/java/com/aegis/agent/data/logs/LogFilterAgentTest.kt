@@ -7,6 +7,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.take
@@ -417,6 +418,27 @@ class LogFilterAgentTest {
             assertEquals(MatchedRule.LEVEL_ERROR_OR_ASSERT, log.matchedRule)
             assertTrue(log.timestampEpochMs > 0L)
             assertTrue(log.id > 0L)
+        }
+
+        @Test
+        @DisplayName("collectSnapshot returns a bounded log batch and stops the agent")
+        fun `collectSnapshot returns bounded batch`() = testScope.runTest {
+            every { mockReader.lines() } returns flowOf(
+                RawLogLine(LogLevel.ERROR, "SecurityManager", "permission denied uid=0", "raw1"),
+                RawLogLine(LogLevel.ERROR, "AuthService", "failed login attempt", "raw2"),
+                RawLogLine(LogLevel.INFO, "ActivityManager", "started activity", "raw3"),
+            )
+
+            val deferred = async {
+                agent.collectSnapshot(windowMs = 100L, maxEntries = 1)
+            }
+            advanceTimeBy(500L)
+
+            val batch = deferred.await()
+
+            assertEquals(1, batch.size)
+            assertEquals("SecurityManager", batch.first().tag)
+            assertEquals(0, agent.bufferedCount())
         }
     }
 
