@@ -9,7 +9,7 @@ It does not turn the POC server into a production backend. It freezes the agent-
 ## Added
 
 ```text
-docs/BACKEND_DATA_ENGINEER_HANDOFF.md
+backend-data-engineering-handoff.md
 poc-server/telemetry_schema_v1.json
 ```
 

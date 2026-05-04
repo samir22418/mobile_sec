@@ -184,7 +184,7 @@ is received.
 
 Detailed setup guide:
 
-`docs/PLAY_INTEGRITY_REAL_DEVICE_GUIDE.md`
+`play-integrity-real-device-guide.md`
 
 ### `AppIntelligenceCollector.kt`
 

@@ -51,7 +51,7 @@ Validated that the project builds and tests when Gradle uses a full JDK.
 
 Added:
 
-- `docs/AGENT_BASELINE_AND_FLOW.md`
+- `agent-baseline-and-flow.md`
 
 Main discovery:
 
@@ -64,7 +64,7 @@ Mapped the existing agent lifecycle and module responsibilities.
 
 Added:
 
-- `docs/AGENT_INTERNALS_PHASE1.md`
+- `agent-internals-phase-1.md`
 
 Confirmed architecture:
 
@@ -97,7 +97,7 @@ Added:
 
 - `ConfigRepository.kt`
 - `AgentConfigHolderTest.kt`
-- `docs/AGENT_PHASE2_CONFIG_PERSISTENCE.md`
+- `agent-phase-2-config-persistence.md`
 
 Updated:
 
@@ -131,7 +131,7 @@ Added:
 
 - `TelemetryPayload.kt`
 - `TelemetryPayloadTest.kt`
-- `docs/AGENT_PHASE3_TELEMETRY_PAYLOAD.md`
+- `agent-phase-3-telemetry-payload.md`
 
 Updated:
 
@@ -167,7 +167,7 @@ Added:
 
 - `UploadStatus` enum
 - `ScanRecordTest.kt`
-- `docs/AGENT_PHASE4_UPLOAD_QUEUE.md`
+- `agent-phase-4-upload-queue.md`
 
 Updated:
 
@@ -220,7 +220,7 @@ Added:
 - `UploadTelemetryUseCase.kt`
 - `TelemetryUploaderTest.kt`
 - `UploadTelemetryUseCaseTest.kt`
-- `docs/AGENT_PHASE5_UPLOAD_CLIENT.md`
+- `agent-phase-5-upload-client.md`
 
 Updated:
 
@@ -258,7 +258,7 @@ Connected the upload use case to the worker.
 
 Added:
 
-- `docs/AGENT_PHASE6_WORKER_UPLOAD.md`
+- `agent-phase-6-worker-upload.md`
 
 Updated:
 
@@ -294,7 +294,7 @@ Added a tiny local telemetry receiver for agent upload/retry testing.
 Added:
 
 - `poc-server/aegis_poc_server.py`
-- `docs/AGENT_PHASE7_POC_SERVER.md`
+- `agent-phase-7-poc-server.md`
 
 ### Phase 8 - Emulator End-To-End Upload And Retry Test
 
@@ -302,7 +302,7 @@ Validated the complete agent-side loop on an Android emulator.
 
 Added:
 
-- `docs/AGENT_PHASE8_E2E_TEST_RESULTS.md`
+- `agent-phase-8-e2e-test-results.md`
 
 Verified:
 
@@ -328,7 +328,7 @@ Added:
 
 - `ScanDetailActivity.kt`
 - `activity_scan_detail.xml`
-- `docs/AGENT_PHASE9_SCAN_DETAIL_UI.md`
+- `agent-phase-9-scan-detail-ui.md`
 
 Updated:
 
@@ -353,7 +353,7 @@ Integrated important-log capture into the worker scan/upload flow.
 
 Added:
 
-- `docs/AGENT_PHASE10_LOG_INTEGRATION.md`
+- `agent-phase-10-log-integration.md`
 
 Updated:
 
@@ -381,8 +381,8 @@ Pulled forward the production-handoff pieces needed by the server, AI, and data-
 
 Added:
 
-- `docs/BACKEND_DATA_ENGINEER_HANDOFF.md`
-- `docs/AGENT_PHASE11_BACKEND_HANDOFF.md`
+- `backend-data-engineering-handoff.md`
+- `agent-phase-11-backend-handoff.md`
 - `poc-server/telemetry_schema_v1.json`
 
 Defined:
@@ -402,7 +402,7 @@ Added a stronger sample-app analyst console pass.
 
 Added:
 
-- `docs/AGENT_FINAL_UI_ENHANCEMENT.md`
+- `agent-final-ui-enhancement.md`
 - `RiskBrief.kt`
 
 Behavior now:
@@ -420,7 +420,7 @@ Added dark/light mode support and moved sample-app colors into resource palettes
 
 Added:
 
-- `docs/UI_THEME_ENHANCEMENT.md`
+- `ui-theme-enhancement.md`
 - `values/colors.xml`
 - `values-night/colors.xml`
 
@@ -437,7 +437,7 @@ Implemented the requested low-complexity scanner UX improvements.
 
 Added:
 
-- `docs/UI_UX_MINI_SCOPE_COMPLETION.md`
+- `ui-ux-mini-scope-completion.md`
 - `SettingsActivity.kt`
 - `activity_settings.xml`
 
@@ -457,7 +457,7 @@ Removed generated/runtime folders and revalidated the project.
 
 Added:
 
-- `docs/PROJECT_CLEANUP_AND_VALIDATION.md`
+- `project-cleanup-and-validation.md`
 
 Removed locally:
 
@@ -627,7 +627,7 @@ Tasks:
 
 Deliverable:
 
-- `docs/AGENT_TEST_MATRIX.md`
+- `agent-test-matrix.md`
 - repeatable test commands
 
 ### Phase 13 - Production Hardening Completion
@@ -660,4 +660,4 @@ The complete agent-side POC loop is now proven:
 Android sample app -> WorkManager -> Room queue -> uploader -> POC server -> JSONL
 ```
 
-The Android agent-side POC contract is ready. The data engineer can build production ingestion, storage, feature extraction, AI/risk scoring, and data processing from `docs/BACKEND_DATA_ENGINEER_HANDOFF.md` and `poc-server/telemetry_schema_v1.json`.
+The Android agent-side POC contract is ready. The data engineer can build production ingestion, storage, feature extraction, AI/risk scoring, and data processing from `backend-data-engineering-handoff.md` and `poc-server/telemetry_schema_v1.json`.

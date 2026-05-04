@@ -20,13 +20,13 @@ The project is an **Android EDR (Endpoint Detection & Response) agent** built as
 | **Sample App** | `SampleApp.kt`, `MainActivity.kt`, `activity_main.xml` | ✅ Working — dashboard with scan button |
 | **System** | `BootReceiver.kt` | ✅ Working — reschedules after reboot |
 | **Unit Tests** | `DeviceScannerTest.kt`, `LogFilterAgentTest.kt`, `AppIntelligenceCollectorTest.kt` | ⚠️ Exist but may need fixes |
-| **Docs** | `AEGIS_PROJECT_GUIDE.md`, `SCAN_PERSISTENCE_AND_DASHBOARD.md` | ✅ Good documentation |
+| **Docs** | `aegis-project-guide.md`, `scan-persistence-and-dashboard.md` | ✅ Good documentation |
 
 ---
 
 ## 🔴 What's Missing (5 Features to Complete)
 
-These come directly from the project's own `docs/AEGIS_PROJECT_GUIDE.md` § 9–10 and from `TelemetrySyncWorker.kt` line 71 (`// Prompt 2.1: uploadTelemetry`):
+These come directly from the project's own `aegis-project-guide.md` § 9–10 and from `TelemetrySyncWorker.kt` line 71 (`// Prompt 2.1: uploadTelemetry`):
 
 ### Phase 1: Backend Upload & Retry Queue
 **Priority: HIGH** — The entire agent collects data but never sends it anywhere.

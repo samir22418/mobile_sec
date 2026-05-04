@@ -204,12 +204,12 @@ poc-server/telemetry_schema_v1.json
 Backend handoff:
 
 ```text
-docs/BACKEND_DATA_ENGINEER_HANDOFF.md
+backend-data-engineering-handoff.md
 ```
 
 Final handoff:
 
 ```text
-docs/final.md
+agent-implementation-handoff.md
 ```
 
