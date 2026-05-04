@@ -414,6 +414,66 @@ Behavior now:
 
 This is still local explainable demo scoring; backend AI/model scoring remains the responsibility of the server/data pipeline.
 
+### UI Theme Enhancement
+
+Added dark/light mode support and moved sample-app colors into resource palettes.
+
+Added:
+
+- `docs/UI_THEME_ENHANCEMENT.md`
+- `values/colors.xml`
+- `values-night/colors.xml`
+
+Behavior now:
+
+- dashboard has a `Dark Mode` / `Light Mode` toggle
+- selected theme mode is saved locally
+- dashboard and detail layouts use semantic theme colors
+- recent scan rows and status surfaces adapt to the active mode
+
+### UI/UX Mini-Scope Completion
+
+Implemented the requested low-complexity scanner UX improvements.
+
+Added:
+
+- `docs/UI_UX_MINI_SCOPE_COMPLETION.md`
+- `SettingsActivity.kt`
+- `activity_settings.xml`
+
+Behavior now:
+
+- dashboard includes upload/root/integrity chips
+- dashboard shows recommended action text
+- recent scans support All, Failed, Uploaded, and Review filters
+- dashboard can share the latest analyst brief as text
+- detail screen can share the analyst brief as text
+- raw JSON sections are hidden by default and can be expanded on demand
+- minimal read-only settings screen shows backend URL, device ID, enrollment status, latest payload, and latest upload state
+
+### Project Cleanup And Validation
+
+Removed generated/runtime folders and revalidated the project.
+
+Added:
+
+- `docs/PROJECT_CLEANUP_AND_VALIDATION.md`
+
+Removed locally:
+
+- `build`
+- `.gradle`
+- `app/build`
+- `aegis-agent/build`
+- `poc-server-data`
+
+Validation:
+
+- agent unit tests passed
+- app debug build passed
+- POC server smoke passed
+- emulator UI smoke passed
+
 Updated:
 
 - `app/build.gradle.kts`

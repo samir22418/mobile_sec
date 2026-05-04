@@ -1,0 +1,22 @@
+<resources>
+    <color name="page_bg">#F6F8FB</color>
+    <color name="surface_primary">#FFFFFF</color>
+    <color name="surface_secondary">#EEF3F8</color>
+    <color name="surface_score">#E7F2FF</color>
+    <color name="text_primary">#111827</color>
+    <color name="text_secondary">#334155</color>
+    <color name="text_muted">#64748B</color>
+    <color name="border_subtle">#D6DEE8</color>
+    <color name="border_strong">#B6C2D0</color>
+    <color name="accent">#0077B6</color>
+    <color name="accent_surface">#E1F3FF</color>
+    <color name="on_accent">#FFFFFF</color>
+    <color name="status_good">#0F9F6E</color>
+    <color name="status_good_surface">#E3F8EE</color>
+    <color name="status_warn">#B7791F</color>
+    <color name="status_warn_surface">#FFF4D8</color>
+    <color name="status_danger">#D64545</color>
+    <color name="status_danger_surface">#FFE8E8</color>
+    <color name="status_neutral">#64748B</color>
+    <color name="status_neutral_surface">#EEF3F8</color>
+</resources>

@@ -1,12 +1,13 @@
 <resources>
     <style name="Theme.AegisAgent" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">#58A6FF</item>
-        <item name="colorPrimaryVariant">#1F6FEB</item>
-        <item name="colorOnPrimary">#0D1117</item>
-        <item name="colorSecondary">#3FB950</item>
-        <item name="colorOnSecondary">#0D1117</item>
-        <item name="android:statusBarColor">#0D1117</item>
-        <item name="android:navigationBarColor">#0D1117</item>
-        <item name="android:windowBackground">#0D1117</item>
+        <item name="colorPrimary">@color/accent</item>
+        <item name="colorPrimaryVariant">@color/accent</item>
+        <item name="colorOnPrimary">@color/on_accent</item>
+        <item name="colorSecondary">@color/status_good</item>
+        <item name="colorOnSecondary">@color/on_accent</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:statusBarColor">@color/page_bg</item>
+        <item name="android:navigationBarColor">@color/page_bg</item>
+        <item name="android:windowBackground">@color/page_bg</item>
     </style>
 </resources>

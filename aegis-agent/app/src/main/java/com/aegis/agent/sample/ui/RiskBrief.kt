@@ -10,6 +10,7 @@ data class RiskBrief(
     val score: Int,
     val label: String,
     val headline: String,
+    val recommendedAction: String,
     val reasons: List<String>,
 ) {
     val reasonText: String
@@ -20,6 +21,7 @@ data class RiskBrief(
             appendLine("risk_score=$score")
             appendLine("risk_label=$label")
             appendLine("headline=$headline")
+            appendLine("recommended_action=$recommendedAction")
             appendLine("reasons=")
             append(reasonText.ifBlank { "- No notable local risk signals." })
         }
@@ -31,6 +33,7 @@ data class RiskBrief(
                     score = 0,
                     label = "Scanning",
                     headline = "Scan in progress",
+                    recommendedAction = "Wait for this scan to finish.",
                     reasons = listOf("Device posture and app inventory are still being collected."),
                 )
             }
@@ -40,6 +43,7 @@ data class RiskBrief(
                     score = 100,
                     label = "Blocked",
                     headline = "Scan failed before completion",
+                    recommendedAction = "Check the scan error and run the scan again.",
                     reasons = listOf(record.errorMessage ?: "The worker returned a failed scan state."),
                 )
             }
@@ -128,11 +132,21 @@ data class RiskBrief(
                 "Watch" -> "Review notable signals"
                 else -> "No major local signals"
             }
+            val recommendedAction = when {
+                record.uploadStatus == UploadStatus.FAILED -> "Check failed upload error and wait for retry."
+                record.uploadStatus == UploadStatus.PENDING -> "Wait for automatic upload retry."
+                record.isRooted == true -> "Review root indicators before trusting this device."
+                record.integrityVerdict == IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION -> "Send this scan to backend verification."
+                record.integrityVerdict == IntegrityVerdict.NOT_CONFIGURED -> "Configure Play Integrity for stronger verdicts."
+                boundedScore >= 50 -> "Review the analyst brief and raw evidence."
+                else -> "No action needed for the local POC view."
+            }
 
             return RiskBrief(
                 score = boundedScore,
                 label = label,
                 headline = headline,
+                recommendedAction = recommendedAction,
                 reasons = reasons.ifEmpty { listOf("No notable local risk signals.") },
             )
         }

@@ -45,6 +45,16 @@ class ScanDetailActivity : AppCompatActivity() {
         binding.btnBack.setOnClickListener { finish() }
         binding.btnCopyPayload.setOnClickListener { copyPayloadSummary() }
         binding.btnCopyAnalystBrief.setOnClickListener { copyAnalystBrief() }
+        binding.btnShareAnalystBrief.setOnClickListener { shareAnalystBrief() }
+        binding.btnToggleDeviceJson.setOnClickListener {
+            toggleJson(binding.deviceJsonContainer, binding.btnToggleDeviceJson, "Device JSON")
+        }
+        binding.btnToggleAppsJson.setOnClickListener {
+            toggleJson(binding.appsJsonContainer, binding.btnToggleAppsJson, "App JSON")
+        }
+        binding.btnToggleLogsJson.setOnClickListener {
+            toggleJson(binding.logsJsonContainer, binding.btnToggleLogsJson, "Logs JSON")
+        }
         binding.btnCopyDeviceJson.setOnClickListener {
             copyText("Device report JSON", currentRecord?.deviceReportJson.orEmpty())
         }
@@ -152,8 +162,26 @@ class ScanDetailActivity : AppCompatActivity() {
 
     private fun copyAnalystBrief() {
         val record = currentRecord ?: return copyText("Analyst brief", "")
+        copyText("Analyst brief", buildAnalystBrief(record))
+    }
+
+    private fun shareAnalystBrief() {
+        val record = currentRecord
+        if (record == null) {
+            Toast.makeText(this, "No report available", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "AEGIS Analyst Brief")
+            putExtra(Intent.EXTRA_TEXT, buildAnalystBrief(record))
+        }
+        startActivity(Intent.createChooser(intent, "Share Analyst Brief"))
+    }
+
+    private fun buildAnalystBrief(record: ScanRecord): String {
         val brief = RiskBrief.from(record)
-        val summary = buildString {
+        return buildString {
             appendLine("scan_id=${record.id}")
             appendLine("payload_id=${record.payloadId ?: "--"}")
             appendLine("device_id=${record.deviceId ?: "--"}")
@@ -167,7 +195,6 @@ class ScanDetailActivity : AppCompatActivity() {
             appendLine("rooted=${record.isRooted ?: "--"}")
             append(brief.analystText)
         }
-        copyText("Analyst brief", summary)
     }
 
     private fun copyText(label: String, value: String) {
@@ -184,6 +211,12 @@ class ScanDetailActivity : AppCompatActivity() {
         runCatching {
             prettyJson.encodeToString(JsonElement.serializer(), prettyJson.parseToJsonElement(rawJson))
         }.getOrElse { rawJson }
+
+    private fun toggleJson(container: android.view.View, button: android.widget.TextView, label: String) {
+        val shouldShow = container.visibility != android.view.View.VISIBLE
+        container.visibility = if (shouldShow) android.view.View.VISIBLE else android.view.View.GONE
+        button.text = if (shouldShow) "Hide $label" else "Show $label"
+    }
 
     private fun formatTime(epochMs: Long?): String =
         epochMs?.let { dateFormat.format(Date(it)) } ?: "--"

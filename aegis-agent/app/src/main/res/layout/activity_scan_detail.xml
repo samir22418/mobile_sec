@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#090D12"
+    android:background="@color/page_bg"
     android:fillViewport="true"
     tools:context=".ui.ScanDetailActivity">
 
@@ -24,11 +24,11 @@
             android:paddingEnd="12dp"
             android:text="Back"
             android:textAllCaps="false"
-            android:textColor="#B9C4CF"
+            android:textColor="@color/text_secondary"
             app:icon="@android:drawable/ic_media_previous"
             app:iconGravity="textStart"
             app:iconPadding="6dp"
-            app:iconTint="#B9C4CF" />
+            app:iconTint="@color/text_secondary" />
 
         <TextView
             android:id="@+id/txtTitle"
@@ -36,7 +36,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:text="Scan detail"
-            android:textColor="#F4F8FB"
+            android:textColor="@color/text_primary"
             android:textSize="26sp"
             android:textStyle="bold" />
 
@@ -46,17 +46,17 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:text="Record unavailable"
-            android:textColor="#95A3B3"
+            android:textColor="@color/text_muted"
             android:textSize="13sp" />
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            app:cardBackgroundColor="#101820"
+            app:cardBackgroundColor="@color/surface_primary"
             app:cardCornerRadius="8dp"
             app:cardElevation="0dp"
-            app:strokeColor="#203040"
+            app:strokeColor="@color/border_subtle"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -69,7 +69,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Analyst Brief"
-                    android:textColor="#F4F8FB"
+                    android:textColor="@color/text_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -84,10 +84,10 @@
                         android:id="@+id/txtRiskScore"
                         android:layout_width="76dp"
                         android:layout_height="76dp"
-                        android:background="#0A1118"
+                        android:background="@color/surface_score"
                         android:gravity="center"
                         android:text="--"
-                        android:textColor="#F4F8FB"
+                        android:textColor="@color/text_primary"
                         android:textSize="26sp"
                         android:textStyle="bold" />
 
@@ -103,7 +103,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="Waiting"
-                            android:textColor="#64D2FF"
+                            android:textColor="@color/accent"
                             android:textSize="13sp"
                             android:textStyle="bold" />
 
@@ -113,7 +113,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:text="No scan record is available"
-                            android:textColor="#F4F8FB"
+                            android:textColor="@color/text_primary"
                             android:textSize="15sp"
                             android:textStyle="bold" />
                     </LinearLayout>
@@ -125,7 +125,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:text="No scan evidence is available yet."
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="13sp" />
 
                 <com.google.android.material.button.MaterialButton
@@ -135,13 +135,30 @@
                     android:layout_marginTop="16dp"
                     android:text="Copy Analyst Brief"
                     android:textAllCaps="false"
-                    android:textColor="#071014"
-                    app:backgroundTint="#64D2FF"
+                    android:textColor="@color/on_accent"
+                    app:backgroundTint="@color/accent"
                     app:cornerRadius="8dp"
                     app:icon="@android:drawable/ic_menu_save"
                     app:iconGravity="textStart"
                     app:iconPadding="8dp"
-                    app:iconTint="#071014" />
+                    app:iconTint="@color/on_accent" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnShareAnalystBrief"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="10dp"
+                    android:text="Share Analyst Brief"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_secondary"
+                    app:cornerRadius="8dp"
+                    app:icon="@android:drawable/ic_menu_share"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
+                    app:iconTint="@color/text_secondary"
+                    app:strokeColor="@color/border_strong"
+                    app:strokeWidth="1dp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -149,10 +166,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            app:cardBackgroundColor="#101820"
+            app:cardBackgroundColor="@color/surface_primary"
             app:cardCornerRadius="8dp"
             app:cardElevation="0dp"
-            app:strokeColor="#203040"
+            app:strokeColor="@color/border_subtle"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -165,7 +182,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Upload"
-                    android:textColor="#F4F8FB"
+                    android:textColor="@color/text_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -175,7 +192,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="--"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="13sp"
                     tools:text="c9c9ebeb-23db-311a-bd25-9b74887d3e14" />
 
@@ -183,7 +200,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Payload ID"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
 
                 <TextView
@@ -192,7 +209,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="--"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp"
                     tools:text="UPLOADED" />
 
@@ -200,7 +217,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Status"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
 
                 <TextView
@@ -209,14 +226,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="--"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Retry count"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
 
                 <TextView
@@ -225,14 +242,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="--"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Last attempt"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
 
                 <TextView
@@ -241,14 +258,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="--"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Uploaded at"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
 
                 <TextView
@@ -257,14 +274,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="None"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Last error"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
 
                 <com.google.android.material.button.MaterialButton
@@ -274,13 +291,13 @@
                     android:layout_marginTop="16dp"
                     android:text="Copy Upload Summary"
                     android:textAllCaps="false"
-                    android:textColor="#071014"
-                    app:backgroundTint="#64D2FF"
+                    android:textColor="@color/on_accent"
+                    app:backgroundTint="@color/accent"
                     app:cornerRadius="8dp"
                     app:icon="@android:drawable/ic_menu_save"
                     app:iconGravity="textStart"
                     app:iconPadding="8dp"
-                    app:iconTint="#071014" />
+                    app:iconTint="@color/on_accent" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -288,10 +305,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            app:cardBackgroundColor="#101820"
+            app:cardBackgroundColor="@color/surface_primary"
             app:cardCornerRadius="8dp"
             app:cardElevation="0dp"
-            app:strokeColor="#203040"
+            app:strokeColor="@color/border_subtle"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -304,7 +321,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Scan"
-                    android:textColor="#F4F8FB"
+                    android:textColor="@color/text_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -314,14 +331,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="--"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Started"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
 
                 <TextView
@@ -330,14 +347,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="--"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Completed"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
 
                 <TextView
@@ -346,14 +363,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="--"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Device ID"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
 
                 <TextView
@@ -362,14 +379,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="--"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Rooted"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
 
                 <TextView
@@ -378,14 +395,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="--"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Integrity"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
 
                 <TextView
@@ -394,14 +411,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="--"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Security patch"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
 
                 <TextView
@@ -410,14 +427,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="--"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Bootloader"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
 
                 <TextView
@@ -426,14 +443,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="--"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Apps"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
 
                 <TextView
@@ -442,14 +459,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="--"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Changed apps"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
 
                 <TextView
@@ -458,14 +475,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="--"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Delta"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
 
                 <TextView
@@ -474,14 +491,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="--"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Important logs"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
 
                 <TextView
@@ -490,14 +507,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="None"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     android:textSize="14sp" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Scan error"
-                    android:textColor="#657182"
+                    android:textColor="@color/text_muted"
                     android:textSize="11sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -506,10 +523,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            app:cardBackgroundColor="#101820"
+            app:cardBackgroundColor="@color/surface_primary"
             app:cardCornerRadius="8dp"
             app:cardElevation="0dp"
-            app:strokeColor="#203040"
+            app:strokeColor="@color/border_subtle"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -522,9 +539,26 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Device JSON"
-                    android:textColor="#F4F8FB"
+                    android:textColor="@color/text_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnToggleDeviceJson"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="12dp"
+                    android:text="Show Device JSON"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_secondary"
+                    app:cornerRadius="8dp"
+                    app:icon="@android:drawable/ic_menu_view"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
+                    app:iconTint="@color/text_secondary"
+                    app:strokeColor="@color/border_strong"
+                    app:strokeWidth="1dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnCopyDeviceJson"
@@ -534,19 +568,21 @@
                     android:layout_marginTop="12dp"
                     android:text="Copy Device JSON"
                     android:textAllCaps="false"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     app:cornerRadius="8dp"
                     app:icon="@android:drawable/ic_menu_save"
                     app:iconGravity="textStart"
                     app:iconPadding="8dp"
-                    app:iconTint="#B9C4CF"
-                    app:strokeColor="#405468"
+                    app:iconTint="@color/text_secondary"
+                    app:strokeColor="@color/border_strong"
                     app:strokeWidth="1dp" />
 
                 <HorizontalScrollView
+                    android:id="@+id/deviceJsonContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp">
+                    android:layout_marginTop="12dp"
+                    android:visibility="gone">
 
                     <TextView
                         android:id="@+id/txtDeviceJson"
@@ -554,7 +590,7 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="monospace"
                         android:text="--"
-                        android:textColor="#B9C4CF"
+                        android:textColor="@color/text_secondary"
                         android:textIsSelectable="true"
                         android:textSize="12sp" />
                 </HorizontalScrollView>
@@ -565,10 +601,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            app:cardBackgroundColor="#101820"
+            app:cardBackgroundColor="@color/surface_primary"
             app:cardCornerRadius="8dp"
             app:cardElevation="0dp"
-            app:strokeColor="#203040"
+            app:strokeColor="@color/border_subtle"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -581,9 +617,26 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="App Snapshot JSON"
-                    android:textColor="#F4F8FB"
+                    android:textColor="@color/text_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnToggleAppsJson"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="12dp"
+                    android:text="Show App JSON"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_secondary"
+                    app:cornerRadius="8dp"
+                    app:icon="@android:drawable/ic_menu_view"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
+                    app:iconTint="@color/text_secondary"
+                    app:strokeColor="@color/border_strong"
+                    app:strokeWidth="1dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnCopyAppsJson"
@@ -593,19 +646,21 @@
                     android:layout_marginTop="12dp"
                     android:text="Copy App JSON"
                     android:textAllCaps="false"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     app:cornerRadius="8dp"
                     app:icon="@android:drawable/ic_menu_save"
                     app:iconGravity="textStart"
                     app:iconPadding="8dp"
-                    app:iconTint="#B9C4CF"
-                    app:strokeColor="#405468"
+                    app:iconTint="@color/text_secondary"
+                    app:strokeColor="@color/border_strong"
                     app:strokeWidth="1dp" />
 
                 <HorizontalScrollView
+                    android:id="@+id/appsJsonContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp">
+                    android:layout_marginTop="12dp"
+                    android:visibility="gone">
 
                     <TextView
                         android:id="@+id/txtAppsJson"
@@ -613,7 +668,7 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="monospace"
                         android:text="--"
-                        android:textColor="#B9C4CF"
+                        android:textColor="@color/text_secondary"
                         android:textIsSelectable="true"
                         android:textSize="12sp" />
                 </HorizontalScrollView>
@@ -625,10 +680,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
             android:layout_marginBottom="24dp"
-            app:cardBackgroundColor="#101820"
+            app:cardBackgroundColor="@color/surface_primary"
             app:cardCornerRadius="8dp"
             app:cardElevation="0dp"
-            app:strokeColor="#203040"
+            app:strokeColor="@color/border_subtle"
             app:strokeWidth="1dp">
 
             <LinearLayout
@@ -641,9 +696,26 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Important Logs JSON"
-                    android:textColor="#F4F8FB"
+                    android:textColor="@color/text_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnToggleLogsJson"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="12dp"
+                    android:text="Show Logs JSON"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_secondary"
+                    app:cornerRadius="8dp"
+                    app:icon="@android:drawable/ic_menu_view"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
+                    app:iconTint="@color/text_secondary"
+                    app:strokeColor="@color/border_strong"
+                    app:strokeWidth="1dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnCopyLogsJson"
@@ -653,19 +725,21 @@
                     android:layout_marginTop="12dp"
                     android:text="Copy Logs JSON"
                     android:textAllCaps="false"
-                    android:textColor="#B9C4CF"
+                    android:textColor="@color/text_secondary"
                     app:cornerRadius="8dp"
                     app:icon="@android:drawable/ic_menu_save"
                     app:iconGravity="textStart"
                     app:iconPadding="8dp"
-                    app:iconTint="#B9C4CF"
-                    app:strokeColor="#405468"
+                    app:iconTint="@color/text_secondary"
+                    app:strokeColor="@color/border_strong"
                     app:strokeWidth="1dp" />
 
                 <HorizontalScrollView
+                    android:id="@+id/logsJsonContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp">
+                    android:layout_marginTop="12dp"
+                    android:visibility="gone">
 
                     <TextView
                         android:id="@+id/txtLogsJson"
@@ -673,7 +747,7 @@
                         android:layout_height="wrap_content"
                         android:fontFamily="monospace"
                         android:text="--"
-                        android:textColor="#B9C4CF"
+                        android:textColor="@color/text_secondary"
                         android:textIsSelectable="true"
                         android:textSize="12sp" />
                 </HorizontalScrollView>
