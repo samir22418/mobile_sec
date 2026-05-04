@@ -95,9 +95,9 @@ Without a cloud project number:
 With a valid cloud project number and device support:
 
 - Status: `Complete`
-- Integrity: `Verification pending`
-- Headline: `Integrity verification pending`
-- Details: tells you backend verification is required before trusting the device
+- Integrity: `Partially verified`
+- Headline: `Integrity partially verified`
+- Details: tells you backend verification is still required before full trust
 
 With Play Store or Play services missing/outdated:
 

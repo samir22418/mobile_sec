@@ -228,7 +228,7 @@ class ScanDetailActivity : AppCompatActivity() {
             IntegrityVerdict.MEETS_DEVICE_INTEGRITY -> "Device"
             IntegrityVerdict.MEETS_BASIC_INTEGRITY -> "Basic"
             IntegrityVerdict.FAILS -> "Failed"
-            IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION -> "Verification pending"
+            IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION -> "Partially verified"
             IntegrityVerdict.NOT_CONFIGURED -> "Not configured"
             IntegrityVerdict.UNAVAILABLE -> "Unavailable"
             IntegrityVerdict.API_ERROR -> "API error"
