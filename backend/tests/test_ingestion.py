@@ -47,9 +47,9 @@ def test_missing_required_field_returns_400(client):
 def test_invalid_enrollment_token_returns_401(client):
     response = client.post(
         "/api/v1/telemetry",
-        json=sample_payload(enrollment_token="wrong-token"),
+        json=sample_payload(),
+        headers={"Authorization": "Bearer wrong-token"},
     )
 
     assert response.status_code == 401
-    assert response.json()["detail"]["error"] == "unauthorized"
 

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.models import TelemetryPayload
 from app.services.raw_store import RawPayloadStore
-from app.services.worker import TelemetryWorker
 
 
 class IngestionService:
@@ -13,14 +13,20 @@ class IngestionService:
         self,
         raw_store: RawPayloadStore,
         session_factory: sessionmaker[Session],
-        process_inline: bool,
+        producer=None,
+        topic: str = "telemetry_events",
+        process_inline: bool = False,
     ) -> None:
         self.raw_store = raw_store
         self.session_factory = session_factory
+        self.producer = producer
+        self.topic = topic
         self.process_inline = process_inline
 
     def ingest(self, session: Session, payload: dict) -> tuple[TelemetryPayload, bool]:
         payload_id = payload["payload_id"]
+        
+        # Try finding it first to avoid unnecessary disk I/O
         existing = session.scalar(select(TelemetryPayload).where(TelemetryPayload.payload_id == payload_id))
         if existing is not None:
             return existing, True
@@ -35,12 +41,25 @@ class IngestionService:
             processing_status="ACCEPTED",
         )
         session.add(record)
-        session.commit()
+        try:
+            session.commit()
+        except IntegrityError:
+            session.rollback()
+            existing = session.scalar(select(TelemetryPayload).where(TelemetryPayload.payload_id == payload_id))
+            return existing, True
+
         session.refresh(record)
 
         if self.process_inline:
+            from app.services.worker import TelemetryWorker
             TelemetryWorker(self.session_factory, self.raw_store).process_one(payload_id)
             session.refresh(record)
+        elif self.producer:
+            try:
+                self.producer.send(self.topic, {"payload_id": payload_id})
+                self.producer.flush()
+            except Exception as e:
+                pass
 
         return record, False
 

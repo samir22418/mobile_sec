@@ -47,14 +47,13 @@ class UploadTelemetryUseCaseTest {
             appSnapshotJson = json.encodeToString(appSnapshot),
         )
 
-        val result = useCase.buildPayload(record, "token")
+        val result = useCase.buildPayload(record)
 
         assertTrue(result.isSuccess)
         val payload = result.getOrThrow()
         assertEquals("payload-001", payload.payloadId)
         assertEquals(7L, payload.scanId)
         assertEquals("device-001", payload.deviceId)
-        assertEquals("token", payload.enrollmentToken)
         assertEquals(deviceReport, payload.deviceReport)
         assertEquals(appSnapshot, payload.appSnapshot)
         assertEquals(1, payload.importantLogs.size)
@@ -66,7 +65,6 @@ class UploadTelemetryUseCaseTest {
     fun `buildPayload fails when JSON is missing`() {
         val result = useCase.buildPayload(
             record = scanRecord(deviceReportJson = null, appSnapshotJson = "{}"),
-            enrollmentToken = "token",
         )
 
         assertTrue(result.isFailure)

@@ -4,10 +4,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.models import TelemetryPayload
-from app.services.ai import AIAnalysisService
+from app.ai.analyzer import AIAnalysisService
 from app.services.normalization import NormalizationService
 from app.services.raw_store import RawPayloadStore
-from app.services.risk import RiskScoringService
+from app.risk.scorer import RiskScoringService
 
 
 class TelemetryWorker:
@@ -62,7 +62,7 @@ class TelemetryWorker:
         try:
             records = session.scalars(
                 select(TelemetryPayload)
-                .where(TelemetryPayload.processing_status.in_(["ACCEPTED", "FAILED"]))
+                .where(TelemetryPayload.processing_status.in_(["ACCEPTED"]))
                 .order_by(TelemetryPayload.received_at.asc())
                 .limit(limit)
             ).all()

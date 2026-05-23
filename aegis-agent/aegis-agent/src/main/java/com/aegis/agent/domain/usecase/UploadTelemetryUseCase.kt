@@ -37,7 +37,7 @@ class UploadTelemetryUseCase @Inject constructor(
             val attemptAt = System.currentTimeMillis()
             scanResultRepository.markUploadAttempt(record.id, attemptAt)
 
-            val payloadResult = buildPayload(record, config.enrollmentToken)
+            val payloadResult = buildPayload(record)
             if (payloadResult.isFailure) {
                 failed += 1
                 val error = payloadResult.exceptionOrNull()
@@ -72,10 +72,7 @@ class UploadTelemetryUseCase @Inject constructor(
         )
     }
 
-    internal fun buildPayload(
-        record: ScanRecord,
-        enrollmentToken: String,
-    ): Result<TelemetryPayload> =
+    internal fun buildPayload(record: ScanRecord): Result<TelemetryPayload> =
         runCatching {
             val deviceReportJson = record.deviceReportJson
                 ?: throw IllegalStateException("Scan ${record.id} has no device report JSON")
@@ -98,7 +95,6 @@ class UploadTelemetryUseCase @Inject constructor(
                 scanId = record.id,
                 deviceId = deviceReport.deviceId,
                 createdAtEpochMs = record.payloadCreatedAtEpochMs ?: System.currentTimeMillis(),
-                enrollmentToken = enrollmentToken,
                 deviceReport = deviceReport,
                 appSnapshot = appSnapshot,
                 importantLogs = importantLogs,

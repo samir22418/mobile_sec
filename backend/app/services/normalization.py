@@ -48,6 +48,8 @@ class NormalizationService:
 
     def _normalize_apps(self, session: Session, payload_id: str, device_id: str, snapshot: dict) -> None:
         now_apps = snapshot.get("apps", [])
+        if not snapshot.get("is_delta", False):
+            session.execute(delete(AppInventoryCurrent).where(AppInventoryCurrent.device_id == device_id))
         for app in now_apps:
             existing = session.scalar(
                 select(AppInventoryCurrent).where(

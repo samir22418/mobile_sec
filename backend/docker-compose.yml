@@ -2,46 +2,54 @@ services:
   api:
     build:
       context: .
-    command: python -m uvicorn app.main:app --host 0.0.0.0 --port 8080
-    environment:
-      AEGIS_BACKEND_DATABASE_URL: postgresql+psycopg://aegis:aegis@postgres:5432/aegis
-      AEGIS_RAW_PAYLOAD_DIR: /data/raw-payloads
-      AEGIS_ACCEPTED_ENROLLMENT_TOKENS: sample-token
-      AEGIS_PROCESS_INLINE: "false"
+      dockerfile: Dockerfile.api
     ports:
       - "8080:8080"
+    environment:
+      AEGIS_BACKEND_DATABASE_URL: ${AEGIS_BACKEND_DATABASE_URL:-postgresql+psycopg://aegis:aegis@postgres:5432/aegis}
+      AEGIS_RAW_PAYLOAD_DIR: /data/raw-payloads
+      AEGIS_ACCEPTED_ENROLLMENT_TOKENS: ${AEGIS_ACCEPTED_ENROLLMENT_TOKENS:-sample-token}
+      AEGIS_ANALYST_TOKENS: ${AEGIS_ANALYST_TOKENS:-sample-token}
+      AEGIS_PROCESS_INLINE: "false"
+      AEGIS_EVENT_PUBLISHER: none
     volumes:
       - backend-data:/data
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_started
 
   worker:
     build:
       context: .
-    command: python -m app.worker
+      dockerfile: Dockerfile.consumer
     environment:
-      AEGIS_BACKEND_DATABASE_URL: postgresql+psycopg://aegis:aegis@postgres:5432/aegis
+      AEGIS_BACKEND_DATABASE_URL: ${AEGIS_BACKEND_DATABASE_URL:-postgresql+psycopg://aegis:aegis@postgres:5432/aegis}
       AEGIS_RAW_PAYLOAD_DIR: /data/raw-payloads
-      AEGIS_ACCEPTED_ENROLLMENT_TOKENS: sample-token
-      AEGIS_PROCESS_INLINE: "false"
-      AEGIS_WORKER_POLL_INTERVAL_SECONDS: "3"
+      AEGIS_WORKER_POLL_INTERVAL_SECONDS: 3
     volumes:
       - backend-data:/data
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_started
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      AEGIS_API_URL: http://api:8080/api/v1
+      AEGIS_ANALYST_TOKEN: ${AEGIS_ANALYST_TOKENS:-sample-token}
+    depends_on:
+      - api
 
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: aegis
-      POSTGRES_USER: aegis
-      POSTGRES_PASSWORD: aegis
+      POSTGRES_DB: ${POSTGRES_DB:-aegis}
+      POSTGRES_USER: ${POSTGRES_USER:-aegis}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aegis}
     ports:
       - "5432:5432"
     volumes:
@@ -52,12 +60,6 @@ services:
       timeout: 5s
       retries: 10
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-
 volumes:
   backend-data:
   postgres-data:
-

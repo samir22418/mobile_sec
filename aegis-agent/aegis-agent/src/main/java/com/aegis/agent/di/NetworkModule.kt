@@ -8,11 +8,13 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.CertificatePinner
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
+import com.aegis.agent.data.persistence.ConfigRepository
 
 /**
  * NetworkModule — Hilt module that provides a singleton [OkHttpClient].
@@ -22,6 +24,7 @@ import javax.inject.Singleton
  *   a remote config — placeholder pins shown below, replace with real SHA-256 pins)
  * - Logging interceptor suppressed in release builds
  * - Sensible timeouts for mobile networks
+ * - Automatically injects the Bearer token if available
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -45,7 +48,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideOkHttpClient(configRepository: ConfigRepository): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor { message ->
             Timber.tag("OkHttp").d(message)
         }.apply {
@@ -56,8 +59,22 @@ object NetworkModule {
                 HttpLoggingInterceptor.Level.NONE
         }
 
+        val authInterceptor = Interceptor { chain ->
+            val request = chain.request()
+            val token = AgentConfigHolder.getOrLoad(configRepository)?.enrollmentToken
+            if (token != null) {
+                val newRequest = request.newBuilder()
+                    .addHeader("Authorization", "Bearer $token")
+                    .build()
+                chain.proceed(newRequest)
+            } else {
+                chain.proceed(request)
+            }
+        }
+
         return OkHttpClient.Builder()
             .applyCertificatePinningIfConfigured()
+            .addInterceptor(authInterceptor)
             .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)

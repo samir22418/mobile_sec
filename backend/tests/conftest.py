@@ -16,6 +16,7 @@ def app(tmp_path: Path):
         raw_payload_dir=tmp_path / "raw",
         telemetry_schema_path=BACKEND_DIR / "app" / "schemas" / "telemetry_schema_v1.json",
         accepted_enrollment_tokens=("sample-token",),
+        analyst_tokens=("sample-token",),
         process_inline=True,
     )
     return create_app(settings)
@@ -23,7 +24,9 @@ def app(tmp_path: Path):
 
 @pytest.fixture
 def client(app):
-    return TestClient(app)
+    client = TestClient(app)
+    client.headers.update({"Authorization": "Bearer sample-token"})
+    return client
 
 
 def sample_payload(
@@ -31,7 +34,6 @@ def sample_payload(
     payload_id: str = "payload-1",
     scan_id: int = 1,
     device_id: str = "sample-device-001",
-    enrollment_token: str = "sample-token",
     rooted: bool = False,
     integrity: str = "MEETS_DEVICE_INTEGRITY",
     patch_date: str = "2099-01-01",
@@ -50,7 +52,6 @@ def sample_payload(
         "scan_id": scan_id,
         "device_id": device_id,
         "created_at_epoch_ms": 1_700_000_000_000 + scan_id,
-        "enrollment_token": enrollment_token,
         "device_report": {
             "device_id": device_id,
             "timestamp_epoch_ms": 1_700_000_000_000 + scan_id,

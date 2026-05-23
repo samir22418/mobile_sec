@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Float, Integer, BigInteger, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, Integer, BigInteger, String, Text, UniqueConstraint, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -32,7 +32,7 @@ class DeviceReport(Base):
     __tablename__ = "device_reports"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    payload_id: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    payload_id: Mapped[str] = mapped_column(String(128), ForeignKey("telemetry_payloads.payload_id"), unique=True, index=True)
     device_id: Mapped[str] = mapped_column(String(255), index=True)
     observed_at_epoch_ms: Mapped[int] = mapped_column(BigInteger)
     is_rooted: Mapped[bool] = mapped_column(Boolean)
@@ -64,14 +64,14 @@ class AppInventoryCurrent(Base):
     last_update_time: Mapped[int] = mapped_column(BigInteger)
     first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
-    last_seen_payload_id: Mapped[str] = mapped_column(String(128), index=True)
+    last_seen_payload_id: Mapped[str] = mapped_column(String(128), ForeignKey("telemetry_payloads.payload_id"), index=True)
 
 
 class ImportantLog(Base):
     __tablename__ = "important_logs"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    payload_id: Mapped[str] = mapped_column(String(128), index=True)
+    payload_id: Mapped[str] = mapped_column(String(128), ForeignKey("telemetry_payloads.payload_id"), index=True)
     device_id: Mapped[str] = mapped_column(String(255), index=True)
     observed_at_epoch_ms: Mapped[int] = mapped_column(BigInteger)
     tag: Mapped[str] = mapped_column(String(128))
@@ -79,47 +79,3 @@ class ImportantLog(Base):
     matched_rule: Mapped[str] = mapped_column(String(64))
     message_redacted: Mapped[str] = mapped_column(Text)
     message_hash: Mapped[str] = mapped_column(String(64), index=True)
-
-
-class RiskAssessment(Base):
-    __tablename__ = "risk_assessments"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    payload_id: Mapped[str] = mapped_column(String(128), unique=True, index=True)
-    device_id: Mapped[str] = mapped_column(String(255), index=True)
-    risk_score: Mapped[int] = mapped_column(Integer)
-    risk_label: Mapped[str] = mapped_column(String(32))
-    confidence: Mapped[float] = mapped_column(Float)
-    reasons_json: Mapped[str] = mapped_column(Text)
-    recommended_action: Mapped[str] = mapped_column(Text)
-    needs_human_review: Mapped[bool] = mapped_column(Boolean)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
-
-
-class AIModelRun(Base):
-    __tablename__ = "ai_model_runs"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    payload_id: Mapped[str] = mapped_column(String(128), index=True)
-    model_role: Mapped[str] = mapped_column(String(64))
-    model_name: Mapped[str] = mapped_column(String(128))
-    prompt_version: Mapped[str] = mapped_column(String(64))
-    input_bundle_hash: Mapped[str] = mapped_column(String(64))
-    output_json: Mapped[str] = mapped_column(Text)
-    status: Mapped[str] = mapped_column(String(32))
-    latency_ms: Mapped[int] = mapped_column(Integer, default=0)
-    cost_estimate: Mapped[float] = mapped_column(Float, default=0.0)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
-
-
-class AnalystFeedback(Base):
-    __tablename__ = "analyst_feedback"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    finding_id: Mapped[str] = mapped_column(String(128), index=True)
-    payload_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
-    analyst_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    label: Mapped[str] = mapped_column(String(64))
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
-

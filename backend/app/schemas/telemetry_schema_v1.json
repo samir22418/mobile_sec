@@ -9,7 +9,6 @@
     "scan_id",
     "device_id",
     "created_at_epoch_ms",
-    "enrollment_token",
     "device_report",
     "app_snapshot",
     "important_logs"
@@ -29,10 +28,6 @@
     },
     "created_at_epoch_ms": {
       "type": "integer"
-    },
-    "enrollment_token": {
-      "type": "string",
-      "description": "POC enrollment credential. Production should move this to Authorization or mTLS."
     },
     "device_report": {
       "$ref": "#/$defs/device_report"

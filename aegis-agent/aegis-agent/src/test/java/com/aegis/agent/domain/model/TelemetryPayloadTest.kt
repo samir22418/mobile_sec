@@ -85,7 +85,6 @@ class TelemetryPayloadTest {
 
         assertEquals(7L, payload.scanId)
         assertEquals("device-001", payload.deviceId)
-        assertEquals("enrollment-token", payload.enrollmentToken)
         assertEquals(deviceReport, payload.deviceReport)
         assertEquals(appSnapshot, payload.appSnapshot)
         assertEquals(importantLogs, payload.importantLogs)
@@ -112,10 +111,10 @@ class TelemetryPayloadTest {
         assertTrue(encoded.contains("\"payload_id\""))
         assertTrue(encoded.contains("\"scan_id\""))
         assertTrue(encoded.contains("\"created_at_epoch_ms\""))
-        assertTrue(encoded.contains("\"enrollment_token\""))
         assertTrue(encoded.contains("\"device_report\""))
         assertTrue(encoded.contains("\"app_snapshot\""))
         assertTrue(encoded.contains("\"important_logs\""))
+        assertTrue(!encoded.contains("enrollment_token"))
     }
 
     private fun deviceReport(deviceId: String): DeviceReport =

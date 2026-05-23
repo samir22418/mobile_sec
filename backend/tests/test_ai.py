@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import select
 
 from app.models import AIModelRun
-from app.services.ai import AIAnalysisService
+from app.ai.analyzer import AIAnalysisService
 from app.services.raw_store import RawPayloadStore
 from app.services.worker import TelemetryWorker
 from tests.conftest import sample_payload, suspicious_app

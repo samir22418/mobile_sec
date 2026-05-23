@@ -86,7 +86,6 @@ class TelemetryUploaderTest {
             scanId = 1L,
             deviceId = "device-001",
             createdAtEpochMs = 1_700_000_000_000L,
-            enrollmentToken = "token",
             deviceReport = DeviceReport(
                 deviceId = "device-001",
                 timestampEpochMs = 1_700_000_000_000L,

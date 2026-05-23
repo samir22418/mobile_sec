@@ -31,6 +31,21 @@ def test_worker_normalizes_device_apps_and_redacted_logs(client, app):
         session.close()
 
 
+def test_full_app_snapshot_replaces_stale_current_inventory(client, app):
+    first = sample_payload(payload_id="first", apps=[suspicious_app("com.example.old")])
+    second = sample_payload(payload_id="second", scan_id=2, apps=[])
+
+    assert client.post("/api/v1/telemetry", json=first).status_code == 202
+    assert client.post("/api/v1/telemetry", json=second).status_code == 202
+
+    session = app.state.session_factory()
+    try:
+        apps = session.scalars(select(AppInventoryCurrent)).all()
+        assert apps == []
+    finally:
+        session.close()
+
+
 def test_failed_processing_marks_payload_failed(app, tmp_path):
     session = app.state.session_factory()
     try:

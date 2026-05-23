@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from tests.conftest import sample_payload, suspicious_app
+from tests.conftest import important_log, sample_payload, suspicious_app
 
 
 def test_latest_risk_returns_most_recent_assessment(client):
@@ -28,13 +28,22 @@ def test_timeline_orders_newest_first(client):
 
 
 def test_payload_lookup_returns_processing_state(client):
-    client.post("/api/v1/telemetry", json=sample_payload(payload_id="lookup"))
+    client.post(
+        "/api/v1/telemetry",
+        json=sample_payload(payload_id="lookup", apps=[suspicious_app()], logs=[important_log()]),
+    )
 
     response = client.get("/api/v1/payloads/lookup")
 
     assert response.status_code == 200
-    assert response.json()["processing_status"] == "PROCESSED"
-    assert response.json()["risk"] is not None
+    body = response.json()
+    assert body["processing_status"] == "PROCESSED"
+    assert body["risk"] is not None
+    assert body["risk_assessment"] is not None
+    assert body["device_report"]["play_integrity_status"] == "MEETS_DEVICE_INTEGRITY"
+    assert body["apps"][0]["package_name"] == "com.example.suspicious"
+    assert body["logs"][0]["message_redacted"] != "token=secret permission denied for user@example.com"
+    assert body["ai_runs"]
 
 
 def test_feedback_endpoint_records_label(client):

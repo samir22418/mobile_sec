@@ -8,9 +8,8 @@ import java.util.UUID
 /**
  * Upload contract for one AEGIS telemetry submission.
  *
- * The payload combines one completed scan with the current enrollment token.
- * The token is intentionally not stored in Room; future upload code should
- * rebuild this object from the saved scan JSON plus encrypted AgentConfig.
+ * The enrollment token is sent as an Authorization bearer header by the
+ * OkHttp client, not as plaintext in this JSON body.
  */
 @Serializable
 data class TelemetryPayload(
@@ -25,9 +24,6 @@ data class TelemetryPayload(
 
     @SerialName("created_at_epoch_ms")
     val createdAtEpochMs: Long,
-
-    @SerialName("enrollment_token")
-    val enrollmentToken: String,
 
     @SerialName("device_report")
     val deviceReport: DeviceReport,
@@ -47,21 +43,22 @@ data class TelemetryPayload(
             deviceReport: DeviceReport,
             appSnapshot: AppSnapshot,
             importantLogs: List<ImportantLog> = emptyList(),
-        ): TelemetryPayload =
-            TelemetryPayload(
+        ): TelemetryPayload {
+            val resolvedDeviceId = deviceReport.deviceId.ifBlank { config.deviceId }
+            return TelemetryPayload(
                 payloadId = stablePayloadId(
                     scanId = scanId,
-                    deviceId = deviceReport.deviceId,
+                    deviceId = resolvedDeviceId,
                     startedAtEpochMs = startedAtEpochMs,
                 ),
                 scanId = scanId,
-                deviceId = deviceReport.deviceId,
+                deviceId = resolvedDeviceId,
                 createdAtEpochMs = createdAtEpochMs,
-                enrollmentToken = config.enrollmentToken,
                 deviceReport = deviceReport,
                 appSnapshot = appSnapshot,
                 importantLogs = importantLogs,
             )
+        }
 
         fun stablePayloadId(
             scanId: Long,
