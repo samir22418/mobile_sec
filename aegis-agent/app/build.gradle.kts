@@ -26,6 +26,12 @@ val aegisBackendUrl = (
         ?: "https://api.aegis.internal"
 ).trim()
 
+val aegisEnrollmentToken = (
+    localProperties.getProperty("AEGIS_ENROLLMENT_TOKEN")
+        ?: providers.gradleProperty("AEGIS_ENROLLMENT_TOKEN").orNull
+        ?: "sample-token"
+).trim()
+
 fun String.asBuildConfigString(): String =
     "\"" + replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
@@ -41,6 +47,7 @@ android {
         versionName = "1.0"
         buildConfigField("long", "AEGIS_CLOUD_PROJECT_NUMBER", "${aegisCloudProjectNumber}L")
         buildConfigField("String", "AEGIS_BACKEND_URL", aegisBackendUrl.asBuildConfigString())
+        buildConfigField("String", "AEGIS_ENROLLMENT_TOKEN", aegisEnrollmentToken.asBuildConfigString())
     }
 
     buildTypes {
