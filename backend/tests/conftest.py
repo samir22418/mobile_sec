@@ -16,6 +16,7 @@ def app(tmp_path: Path):
         raw_payload_dir=tmp_path / "raw",
         telemetry_schema_path=BACKEND_DIR / "app" / "schemas" / "telemetry_schema_v1.json",
         accepted_enrollment_tokens=("sample-token",),
+        console_api_key="test-console-key",
         process_inline=True,
     )
     return create_app(settings)
@@ -24,6 +25,12 @@ def app(tmp_path: Path):
 @pytest.fixture
 def client(app):
     return TestClient(app)
+
+
+@pytest.fixture
+def auth_headers() -> dict:
+    """HTTP headers that satisfy the console API-key check in tests."""
+    return {"X-Aegis-Api-Key": "test-console-key"}
 
 
 def sample_payload(

@@ -115,6 +115,30 @@ class ScanResultRepository @Inject constructor(
             limit = limit,
         ).map { it.toDomain() }
 
+    suspend fun markDeadLetter(
+        id: Long,
+        error: Throwable,
+        attemptAtEpochMs: Long = System.currentTimeMillis(),
+    ) {
+        markDeadLetter(
+            id = id,
+            message = error.message ?: error::class.java.simpleName,
+            attemptAtEpochMs = attemptAtEpochMs,
+        )
+    }
+
+    suspend fun markDeadLetter(
+        id: Long,
+        message: String,
+        attemptAtEpochMs: Long = System.currentTimeMillis(),
+    ) {
+        dao.markDeadLetter(
+            id = id,
+            attemptAtEpochMs = attemptAtEpochMs,
+            error = message.take(MAX_UPLOAD_ERROR_LENGTH),
+        )
+    }
+
     suspend fun markUploadAttempt(id: Long, attemptAtEpochMs: Long = System.currentTimeMillis()) {
         dao.markUploadAttempt(
             id = id,
@@ -162,6 +186,7 @@ class ScanResultRepository @Inject constructor(
         const val DATABASE_NAME = "aegis_agent.db"
         const val DEFAULT_UPLOAD_BATCH_SIZE = 10
         const val DEFAULT_RECENT_SCAN_LIMIT = 5
+        const val MAX_UPLOAD_RETRIES = 5
         private const val MAX_SCAN_RECORDS = 25
         private const val MAX_UPLOAD_ERROR_LENGTH = 1_000
     }

@@ -243,6 +243,7 @@ class MainActivity : AppCompatActivity() {
             UploadStatus.UPLOADING -> "Uploading"
             UploadStatus.PENDING -> "Queued"
             UploadStatus.FAILED -> "Retrying"
+            UploadStatus.DEAD_LETTER -> "Failed"
             UploadStatus.NOT_READY -> "Not ready"
         }
         binding.txtUploadChip.setTextColor(colorForUpload(record.uploadStatus))
@@ -295,7 +296,9 @@ class MainActivity : AppCompatActivity() {
         when (scanFilter) {
             ScanFilter.ALL -> recentRecords
             ScanFilter.FAILED -> recentRecords.filter {
-                it.status == ScanStatus.FAILED || it.uploadStatus == UploadStatus.FAILED
+                it.status == ScanStatus.FAILED ||
+                    it.uploadStatus == UploadStatus.FAILED ||
+                    it.uploadStatus == UploadStatus.DEAD_LETTER
             }
             ScanFilter.UPLOADED -> recentRecords.filter { it.uploadStatus == UploadStatus.UPLOADED }
             ScanFilter.REVIEW -> recentRecords.filter {
@@ -372,6 +375,7 @@ class MainActivity : AppCompatActivity() {
             UploadStatus.UPLOADING -> "Uploading"
             UploadStatus.PENDING -> "Queued"
             UploadStatus.FAILED -> "Retrying"
+            UploadStatus.DEAD_LETTER -> "Failed"
             UploadStatus.NOT_READY -> "Not ready"
         }
 
@@ -381,6 +385,7 @@ class MainActivity : AppCompatActivity() {
             UploadStatus.UPLOADING,
             UploadStatus.PENDING -> color(R.color.accent)
             UploadStatus.FAILED -> color(R.color.status_warn)
+            UploadStatus.DEAD_LETTER -> color(R.color.status_danger)
             UploadStatus.NOT_READY -> color(R.color.text_muted)
         }
 

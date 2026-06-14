@@ -108,6 +108,11 @@ data class RiskBrief(
                 reasons += "Latest upload failed and remains queued for retry."
             }
 
+            if (record.uploadStatus == UploadStatus.DEAD_LETTER) {
+                score += 15
+                reasons += "Upload permanently failed after ${record.retryCount} attempts — manual intervention required."
+            }
+
             if ((record.retryCount) > 0) {
                 score += minOf(10, record.retryCount * 3)
                 reasons += "Upload retry count is ${record.retryCount}."
@@ -133,6 +138,7 @@ data class RiskBrief(
                 else -> "No major local signals"
             }
             val recommendedAction = when {
+                record.uploadStatus == UploadStatus.DEAD_LETTER -> "Upload permanently failed. Check backend logs and manually re-trigger if needed."
                 record.uploadStatus == UploadStatus.FAILED -> "Check failed upload error and wait for retry."
                 record.uploadStatus == UploadStatus.PENDING -> "Wait for automatic upload retry."
                 record.isRooted == true -> "Review root indicators before trusting this device."

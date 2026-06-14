@@ -48,16 +48,25 @@ class NormalizationService:
 
     def _normalize_apps(self, session: Session, payload_id: str, device_id: str, snapshot: dict) -> None:
         now_apps = snapshot.get("apps", [])
-        for app in now_apps:
-            existing = session.scalar(
-                select(AppInventoryCurrent).where(
-                    AppInventoryCurrent.device_id == device_id,
-                    AppInventoryCurrent.package_name == app["package_name"],
-                )
+        if not now_apps:
+            return
+
+        # Fetch all existing rows for this device in one query keyed by package name,
+        # replacing the previous per-app SELECT (N+1 → 1 query).
+        incoming_names = {app["package_name"] for app in now_apps}
+        existing_rows = session.scalars(
+            select(AppInventoryCurrent).where(
+                AppInventoryCurrent.device_id == device_id,
+                AppInventoryCurrent.package_name.in_(incoming_names),
             )
+        ).all()
+        existing_by_name: dict[str, AppInventoryCurrent] = {row.package_name: row for row in existing_rows}
+
+        for app in now_apps:
+            existing = existing_by_name.get(app["package_name"])
             permissions_json = json.dumps(app.get("requested_permissions", []), sort_keys=True)
             if existing is None:
-                existing = AppInventoryCurrent(
+                session.add(AppInventoryCurrent(
                     device_id=device_id,
                     package_name=app["package_name"],
                     version_name=app.get("version_name"),
@@ -70,8 +79,7 @@ class NormalizationService:
                     first_install_time=app["first_install_time"],
                     last_update_time=app["last_update_time"],
                     last_seen_payload_id=payload_id,
-                )
-                session.add(existing)
+                ))
             else:
                 existing.version_name = app.get("version_name")
                 existing.version_code = app["version_code"]

@@ -68,4 +68,7 @@ class TelemetryUploader @Inject constructor(
 class TelemetryUploadException(
     val statusCode: Int,
     val responseBody: String?,
-) : Exception("Telemetry upload failed with HTTP $statusCode${responseBody?.let { ": $it" }.orEmpty()}")
+) : Exception("Telemetry upload failed with HTTP $statusCode${responseBody?.let { ": $it" }.orEmpty()}") {
+    // 5xx and 429 are transient — safe to retry. 4xx (except 429) means the payload is rejected.
+    val isRetryable: Boolean get() = statusCode >= 500 || statusCode == 429
+}

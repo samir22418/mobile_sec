@@ -29,13 +29,17 @@ enum class ScanTrigger {
 
 /**
  * Upload lifecycle for a completed scan payload.
+ *
+ * DEAD_LETTER is a terminal failure state: the payload was rejected by the server (4xx) or
+ * exhausted all retries. It is never re-queued automatically.
  */
 enum class UploadStatus {
     NOT_READY,
     PENDING,
     UPLOADING,
     UPLOADED,
-    FAILED;
+    FAILED,
+    DEAD_LETTER;
 
     companion object {
         fun fromValue(value: String?): UploadStatus =

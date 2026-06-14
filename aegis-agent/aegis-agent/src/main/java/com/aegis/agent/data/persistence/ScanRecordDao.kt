@@ -94,6 +94,22 @@ interface ScanRecordDao {
     @Query(
         """
         UPDATE scan_records
+        SET upload_status = 'DEAD_LETTER',
+            retry_count = retry_count + 1,
+            last_upload_attempt_at_epoch_ms = :attemptAtEpochMs,
+            last_upload_error = :error
+        WHERE id = :id
+        """
+    )
+    suspend fun markDeadLetter(
+        id: Long,
+        attemptAtEpochMs: Long,
+        error: String,
+    )
+
+    @Query(
+        """
+        UPDATE scan_records
         SET upload_status = 'PENDING',
             last_upload_error = NULL
         WHERE id = :id

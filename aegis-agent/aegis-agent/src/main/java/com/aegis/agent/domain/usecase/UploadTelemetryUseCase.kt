@@ -1,5 +1,6 @@
 package com.aegis.agent.domain.usecase
 
+import com.aegis.agent.data.network.TelemetryUploadException
 import com.aegis.agent.data.network.TelemetryUploader
 import com.aegis.agent.data.persistence.ConfigRepository
 import com.aegis.agent.data.persistence.ScanResultRepository
@@ -42,7 +43,9 @@ class UploadTelemetryUseCase @Inject constructor(
                 failed += 1
                 val error = payloadResult.exceptionOrNull()
                     ?: IllegalStateException("Failed to build telemetry payload")
-                scanResultRepository.markUploadFailed(record.id, error, attemptAt)
+                // Corrupt/missing JSON can never succeed on retry — dead-letter immediately.
+                Timber.e(error, "UploadTelemetryUseCase: dead-lettering scan=${record.id} (payload build failed)")
+                scanResultRepository.markDeadLetter(record.id, error, attemptAt)
                 continue
             }
 
@@ -58,8 +61,15 @@ class UploadTelemetryUseCase @Inject constructor(
                 failed += 1
                 val error = uploadResult.exceptionOrNull()
                     ?: IllegalStateException("Telemetry upload failed")
-                Timber.w(error, "UploadTelemetryUseCase: upload failed for scan=${record.id}")
-                scanResultRepository.markUploadFailed(record.id, error, attemptAt)
+                val isRetryable = (error as? TelemetryUploadException)?.isRetryable ?: true
+                val wouldExceedLimit = record.retryCount + 1 >= ScanResultRepository.MAX_UPLOAD_RETRIES
+                if (!isRetryable || wouldExceedLimit) {
+                    Timber.e(error, "UploadTelemetryUseCase: dead-lettering scan=${record.id} (retryable=$isRetryable, retries=${record.retryCount})")
+                    scanResultRepository.markDeadLetter(record.id, error, attemptAt)
+                } else {
+                    Timber.w(error, "UploadTelemetryUseCase: upload failed for scan=${record.id}, retry ${record.retryCount + 1}/${ScanResultRepository.MAX_UPLOAD_RETRIES}")
+                    scanResultRepository.markUploadFailed(record.id, error, attemptAt)
+                }
             }
         }
 

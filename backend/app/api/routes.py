@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_session
+from app.dependencies import get_session, require_console_key
 from app.models import AnalystFeedback, RiskAssessment, TelemetryPayload
 from app.services.auth import AuthError, AuthService
 from app.services.ingestion import IngestionService
@@ -75,7 +75,11 @@ def ingest_telemetry(
 
 
 @router.get("/api/v1/devices/{device_id}/latest-risk")
-def latest_risk(device_id: str, session: Session = Depends(get_session)) -> dict:
+def latest_risk(
+    device_id: str,
+    session: Session = Depends(get_session),
+    _auth: None = Depends(require_console_key),
+) -> dict:
     assessment = session.scalar(
         select(RiskAssessment)
         .where(RiskAssessment.device_id == device_id)
@@ -88,7 +92,12 @@ def latest_risk(device_id: str, session: Session = Depends(get_session)) -> dict
 
 
 @router.get("/api/v1/devices/{device_id}/timeline")
-def device_timeline(device_id: str, session: Session = Depends(get_session), limit: int = 20) -> dict:
+def device_timeline(
+    device_id: str,
+    session: Session = Depends(get_session),
+    limit: int = 20,
+    _auth: None = Depends(require_console_key),
+) -> dict:
     assessments = session.scalars(
         select(RiskAssessment)
         .where(RiskAssessment.device_id == device_id)
@@ -102,7 +111,11 @@ def device_timeline(device_id: str, session: Session = Depends(get_session), lim
 
 
 @router.get("/api/v1/payloads/{payload_id}")
-def payload_lookup(payload_id: str, session: Session = Depends(get_session)) -> dict:
+def payload_lookup(
+    payload_id: str,
+    session: Session = Depends(get_session),
+    _auth: None = Depends(require_console_key),
+) -> dict:
     record = session.scalar(select(TelemetryPayload).where(TelemetryPayload.payload_id == payload_id))
     if record is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error": "not_found"})
@@ -123,6 +136,7 @@ def create_feedback(
     finding_id: str,
     body: FeedbackRequest,
     session: Session = Depends(get_session),
+    _auth: None = Depends(require_console_key),
 ) -> dict:
     if body.label not in ALLOWED_FEEDBACK_LABELS:
         raise HTTPException(
