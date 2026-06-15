@@ -1,0 +1,21 @@
+## AEGIS Agent — local build configuration
+##
+## Copy this file to local.properties (gitignored) and fill in your values.
+## local.properties is read by build.gradle.kts at compile time; these values
+## are baked into BuildConfig fields.
+
+# Backend URL
+# Emulator → host machine:        http://10.0.2.2:8000
+# Genymotion → host machine:      http://10.0.3.2:8000
+# Real device on LAN:             http://<your-machine-LAN-IP>:8000
+# Production:                     https://api.aegis.internal
+AEGIS_BACKEND_URL=http://10.0.2.2:8000
+
+# Enrollment token — must match AEGIS_ACCEPTED_ENROLLMENT_TOKENS in backend/.env
+# "sample-token" is accepted when the backend runs with AEGIS_ENV=dev.
+AEGIS_ENROLLMENT_TOKEN=sample-token
+
+# Google Cloud project number for Play Integrity API.
+# Leave 0 if not using Play Integrity (verdict will be NOT_CONFIGURED).
+# Obtain from: Play Console → Setup → API Services.
+AEGIS_CLOUD_PROJECT_NUMBER=0

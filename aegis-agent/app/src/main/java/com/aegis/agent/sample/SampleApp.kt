@@ -1,5 +1,6 @@
 package com.aegis.agent.sample
 
+import android.provider.Settings
 import com.aegis.agent.AegisApplication
 import com.aegis.agent.AegisSdk
 import com.aegis.agent.domain.model.AgentConfig
@@ -18,18 +19,21 @@ class SampleApp : AegisApplication() {
     override fun onCreate() {
         super.onCreate()
 
-        // Initialise AEGIS with placeholder config — replace with real values
+        val deviceId = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+            ?.takeIf { it.isNotBlank() }
+            ?: "unknown-device"
+
         AegisSdk.init(
             context = this,
             config = AgentConfig(
-                backendUrl      = BuildConfig.AEGIS_BACKEND_URL,
-                deviceId        = "sample-device-001",
-                enrollmentToken = "sample-token",
-                isByodMode      = false,
-                scanIntervalMin = 60L,
+                backendUrl         = BuildConfig.AEGIS_BACKEND_URL,
+                deviceId           = deviceId,
+                enrollmentToken    = BuildConfig.AEGIS_ENROLLMENT_TOKEN,
+                isByodMode         = false,
+                scanIntervalMin    = 60L,
                 cloudProjectNumber = BuildConfig.AEGIS_CLOUD_PROJECT_NUMBER,
             )
         )
-        Timber.d("SampleApp: AEGIS agent initialised")
+        Timber.d("SampleApp: AEGIS agent initialised — device=$deviceId backend=${BuildConfig.AEGIS_BACKEND_URL}")
     }
 }

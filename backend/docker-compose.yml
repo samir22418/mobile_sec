@@ -1,0 +1,63 @@
+services:
+  api:
+    build:
+      context: .
+    command: python -m uvicorn app.main:app --host 0.0.0.0 --port 8080
+    environment:
+      AEGIS_BACKEND_DATABASE_URL: postgresql+psycopg://aegis:aegis@postgres:5432/aegis
+      AEGIS_RAW_PAYLOAD_DIR: /data/raw-payloads
+      AEGIS_ACCEPTED_ENROLLMENT_TOKENS: sample-token
+      AEGIS_PROCESS_INLINE: "false"
+    ports:
+      - "8080:8080"
+    volumes:
+      - backend-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    build:
+      context: .
+    command: python -m app.worker
+    environment:
+      AEGIS_BACKEND_DATABASE_URL: postgresql+psycopg://aegis:aegis@postgres:5432/aegis
+      AEGIS_RAW_PAYLOAD_DIR: /data/raw-payloads
+      AEGIS_ACCEPTED_ENROLLMENT_TOKENS: sample-token
+      AEGIS_PROCESS_INLINE: "false"
+      AEGIS_WORKER_POLL_INTERVAL_SECONDS: "3"
+    volumes:
+      - backend-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: aegis
+      POSTGRES_USER: aegis
+      POSTGRES_PASSWORD: aegis
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aegis -d aegis"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  backend-data:
+  postgres-data:
+

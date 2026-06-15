@@ -6,6 +6,13 @@ The Android agent-side POC is ready for backend, AI model, and data-processing w
 
 The current server in this repo is only a receiver POC. The data engineer should replace it with production ingestion, storage, validation, feature extraction, and scoring.
 
+Architecture companion:
+
+```text
+backend-server-architecture.md
+ai-llm-threat-analysis-architecture.md
+```
+
 ## Endpoint Contract
 
 Current agent upload target:
@@ -245,4 +252,3 @@ Implemented and verified:
 - important log capture and payload inclusion
 
 The data engineer can now build server ingestion and data/model pipelines against `telemetry_schema_v1.json`.
-

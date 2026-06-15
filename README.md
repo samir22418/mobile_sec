@@ -5,9 +5,9 @@ It collects local device posture, app inventory, selected security logs, and upl
 state so a backend/data engineering team can validate, enrich, and process the
 telemetry later.
 
-The current focus is the Android agent and sample scanner UI. The backend in this
-repository is intentionally a small proof-of-concept server, not the final
-production backend.
+The current focus is the Android agent, sample scanner UI, and a local backend
+MVP for ingestion, normalization, risk scoring, and AI audit stubs. The legacy
+POC server remains available for simple upload smoke tests.
 
 ## What Is Included
 
@@ -19,6 +19,7 @@ production backend.
 - Root, bootloader, patch, app inventory, and important log signals
 - Local risk brief and analyst-friendly scan detail UI
 - Dark/light theme support
+- Local FastAPI backend MVP in `backend`
 - POC telemetry server in `aegis-agent/poc-server`
 - Backend/data engineer handoff documentation in `docs`
 
@@ -41,6 +42,8 @@ mobile_sec/
     app/              Sample scanner app
     poc-server/       Python POC telemetry receiver
     gradle/           Android build configuration
+  backend/            FastAPI backend MVP
+  backend-data/       Local runtime DB/raw payloads, ignored by git
   docs/               Project guides, phases, handoff notes
 ```
 
@@ -70,6 +73,20 @@ Start the POC server:
 
 ```powershell
 python .\poc-server\aegis_poc_server.py --host 0.0.0.0 --port 8080 --output-dir .\poc-server-data
+```
+
+Or start the backend MVP from the repository root:
+
+```powershell
+cd C:\Users\ASUS\Desktop\mobile_sec\backend
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
+```
+
+Run backend tests:
+
+```powershell
+cd C:\Users\ASUS\Desktop\mobile_sec\backend
+pytest
 ```
 
 Install and launch the sample app on an emulator:
@@ -109,6 +126,11 @@ AEGIS_CLOUD_PROJECT_NUMBER=123456789012
 - [Run Project Guide](docs/run-project-guide.md)
 - [Agent Implementation Handoff](docs/agent-implementation-handoff.md)
 - [Backend Data Engineering Handoff](docs/backend-data-engineering-handoff.md)
+- [Backend Server Architecture](docs/backend-server-architecture.md)
+- [Final Backend + AI Architecture](docs/final-backend-ai-architecture.md)
+- [Final Backend + AI Architecture Charts](docs/final-backend-ai-architecture-charts.md)
+- [AI/LLM Threat Analysis Architecture](docs/ai-llm-threat-analysis-architecture.md)
+- [AI/LLM Threat Analysis Charts](docs/ai-llm-threat-analysis-charts.md)
 - [Play Integrity Real Device Guide](docs/play-integrity-real-device-guide.md)
 - [UI Theme Enhancement](docs/ui-theme-enhancement.md)
 - [UI/UX Mini Scope Completion](docs/ui-ux-mini-scope-completion.md)
@@ -116,11 +138,12 @@ AEGIS_CLOUD_PROJECT_NUMBER=123456789012
 ## Current Project Boundary
 
 This repository is ready for Android agent demonstration, local telemetry upload,
-and backend handoff. The next major ownership area is server-side processing:
+and backend MVP iteration. Remaining production server work includes:
 
 - final Play Integrity token validation
 - telemetry storage
 - model/data pipelines
+- multi-model AI/LLM threat analysis
 - backend risk scoring
 - production API authentication
 - dashboard or SOC integration
