@@ -12,14 +12,12 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from app.config import BACKEND_DIR, Settings
-from app.database import Base, make_engine
 from app.main import create_app
 from app.models import DeviceReport, TelemetryPayload
 from app.risk.scorer import RiskScoringService
 from app.services.play_integrity import (
     PlayIntegrityError,
     PlayIntegrityService,
-    _parse_decoded_payload,
 )
 
 # ---------------------------------------------------------------------------

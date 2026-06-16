@@ -9,15 +9,14 @@ yields a finite list of messages and then raises StopIteration.
 from __future__ import annotations
 
 from collections import namedtuple
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
-import pytest
 from sqlalchemy import select
 
 from app.consumers.telemetry_consumer import TelemetryConsumer
 from app.kafka import MAX_RETRIES
 from app.models import TelemetryPayload
-from tests.conftest import sample_payload, suspicious_app
+from tests.conftest import sample_payload
 
 # ---------------------------------------------------------------------------
 # Helpers

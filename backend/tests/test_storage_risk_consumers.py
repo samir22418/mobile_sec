@@ -7,7 +7,6 @@ from __future__ import annotations
 from collections import namedtuple
 from unittest.mock import MagicMock, patch
 
-import pytest
 from sqlalchemy import select
 
 from app.consumers.risk_consumer import RiskConsumer

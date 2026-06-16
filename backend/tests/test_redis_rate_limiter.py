@@ -10,7 +10,6 @@ from __future__ import annotations
 import threading
 
 import fakeredis
-import pytest
 
 from app.services.rate_limiter import InMemoryRateLimiter, RedisRateLimiter, make_rate_limiter
 from tests.conftest import sample_payload

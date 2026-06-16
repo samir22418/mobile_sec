@@ -5,9 +5,7 @@ appropriate status codes (200 ok / 503 degraded).
 """
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
 
-import pytest
 
 
 def test_health_ok(client):
@@ -88,7 +86,6 @@ def test_health_redis_ok_when_limiter_has_client(client, app):
         assert resp.json()["checks"]["redis"]["status"] == "ok"
     finally:
         app.state.telemetry_rate_limiter = real_limiter
-        from app.config import load_settings
         app.state.settings = Settings(
             database_url=str(app.state.settings.database_url),
             telemetry_schema_path=app.state.settings.telemetry_schema_path,
