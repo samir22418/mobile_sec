@@ -1,5 +1,23 @@
 backend-data/
 __pycache__/
 .pytest_cache/
+.mypy_cache/
 *.pyc
+.env
+.env.*
+!.env.example
+!.env.production.example
+node_modules/
+dist/
+frontend/node_modules/
+frontend/dist/
 
+# Runtime / logs
+*.log
+backend_live.log
+backend/.coverage*
+
+# Generated / temp
+docs/generated/
+verify_output.txt
+*.bat

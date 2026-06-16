@@ -117,6 +117,14 @@
             "null"
           ]
         },
+        "integrity_token": {
+          "type": ["string", "null"],
+          "description": "Encrypted Play Integrity token for backend decodeIntegrityToken verification."
+        },
+        "integrity_nonce": {
+          "type": ["string", "null"],
+          "description": "Nonce used when requesting the integrity token — verified server-side to prevent replay attacks."
+        },
         "security_patch_date": {
           "type": "string"
         },

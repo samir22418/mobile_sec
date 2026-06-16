@@ -1,10 +1,11 @@
 import json
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_session
 from app.auth.bearer import verify_analyst_token
+from app.dependencies import get_session
 from app.models import RiskAssessment, TelemetryPayload
 
 router = APIRouter()
@@ -28,8 +29,9 @@ def get_devices(
     session: Session = Depends(get_session),
     token: str = Depends(verify_analyst_token),
 ) -> dict:
-    from app.models import TelemetryPayload
     from sqlalchemy import func
+
+    from app.models import TelemetryPayload
     
     # Simple distinct device list for now
     devices = session.scalars(select(TelemetryPayload.device_id).distinct()).all()
@@ -70,7 +72,7 @@ def latest_risk(
     )
     if assessment is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error": "not_found"})
-    return risk_response(assessment)
+    return risk_response(assessment) or {}
 
 @router.get("/api/v1/devices/{device_id}/timeline")
 def device_timeline(

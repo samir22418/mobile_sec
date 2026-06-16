@@ -1,24 +1,35 @@
-import logging
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy import select
+from __future__ import annotations
 
+import logging
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session, sessionmaker
+
+from app.ai.analyzer import AIAnalysisService
 from app.config import Settings
 from app.kafka import get_consumer
 from app.models import TelemetryPayload
-from app.services.raw_store import RawPayloadStore
 from app.risk.scorer import RiskScoringService
-from app.ai.analyzer import AIAnalysisService
+from app.services.raw_store import RawPayloadStore
 
 logger = logging.getLogger(__name__)
 
+
 class RiskConsumer:
-    def __init__(self, settings: Settings, session_factory: sessionmaker[Session], raw_store: RawPayloadStore):
+    def __init__(
+        self,
+        settings: Settings,
+        session_factory: sessionmaker[Session],
+        raw_store: RawPayloadStore,
+        *,
+        consumer=None,
+    ) -> None:
         self.settings = settings
         self.session_factory = session_factory
         self.raw_store = raw_store
         self.risk_scorer = RiskScoringService()
         self.ai_service = AIAnalysisService()
-        self.consumer = get_consumer(settings, settings.kafka_telemetry_topic, group_id="risk_group")
+        self.consumer = consumer or get_consumer(settings, settings.kafka_telemetry_topic, group_id="risk_group")
         
     def run(self):
         logger.info("RiskConsumer started")

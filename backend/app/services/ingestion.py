@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.models import TelemetryPayload
+from app.services.play_integrity import PlayIntegrityService
 from app.services.raw_store import RawPayloadStore
 
 
@@ -16,12 +17,14 @@ class IngestionService:
         producer=None,
         topic: str = "telemetry_events",
         process_inline: bool = False,
+        play_integrity_service: PlayIntegrityService | None = None,
     ) -> None:
         self.raw_store = raw_store
         self.session_factory = session_factory
         self.producer = producer
         self.topic = topic
         self.process_inline = process_inline
+        self._play_integrity = play_integrity_service
 
     def ingest(self, session: Session, payload: dict) -> tuple[TelemetryPayload, bool]:
         payload_id = payload["payload_id"]
@@ -52,14 +55,18 @@ class IngestionService:
 
         if self.process_inline:
             from app.services.worker import TelemetryWorker
-            TelemetryWorker(self.session_factory, self.raw_store).process_one(payload_id)
+            TelemetryWorker(
+                self.session_factory,
+                self.raw_store,
+                play_integrity_service=self._play_integrity,
+            ).process_one(payload_id)
             session.refresh(record)
         elif self.producer:
             try:
                 self.producer.send(self.topic, {"payload_id": payload_id})
                 self.producer.flush()
-            except Exception as e:
-                pass
+            except Exception as exc:
+                print(f"[ingestion] Kafka publish failed for {payload_id}: {exc}")
 
         return record, False
 

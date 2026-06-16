@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from sqlalchemy import select
 
-from app.models import AppInventoryCurrent, ImportantLog, RiskAssessment, TelemetryPayload
+from app.models import (
+    AppInventoryCurrent,
+    ImportantLog,
+    RiskAssessment,
+    TelemetryPayload,
+)
 from app.services.raw_store import RawPayloadStore
 from app.services.worker import TelemetryWorker
 from tests.conftest import important_log, sample_payload, suspicious_app
@@ -11,7 +16,7 @@ from tests.conftest import important_log, sample_payload, suspicious_app
 def test_worker_normalizes_device_apps_and_redacted_logs(client, app):
     payload = sample_payload(
         apps=[suspicious_app()],
-        logs=[important_log()],
+        logs=[important_log("token=secret api_key=abc123 user@example.com 4111111111111111 123-45-6789")],
     )
 
     response = client.post("/api/v1/telemetry", json=payload)
@@ -25,7 +30,10 @@ def test_worker_normalizes_device_apps_and_redacted_logs(client, app):
         assert app_row.install_source == "SIDELOADED"
         assert log_row is not None
         assert "secret" not in log_row.message_redacted
+        assert "abc123" not in log_row.message_redacted
         assert "user@example.com" not in log_row.message_redacted
+        assert "4111111111111111" not in log_row.message_redacted
+        assert "123-45-6789" not in log_row.message_redacted
         assert len(log_row.message_hash) == 64
     finally:
         session.close()

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from fastapi.testclient import TestClient
 from sqlalchemy import select
 
+from app.config import BACKEND_DIR, Settings
+from app.main import create_app
 from app.models import TelemetryPayload
 from tests.conftest import sample_payload
 
@@ -52,4 +55,31 @@ def test_invalid_enrollment_token_returns_401(client):
     )
 
     assert response.status_code == 401
+
+
+def test_telemetry_rate_limit_returns_429(tmp_path):
+    settings = Settings(
+        database_url=f"sqlite:///{(tmp_path / 'rate-limit.db').as_posix()}",
+        raw_payload_dir=tmp_path / "raw",
+        telemetry_schema_path=BACKEND_DIR / "app" / "schemas" / "telemetry_schema_v1.json",
+        accepted_enrollment_tokens=("sample-token",),
+        analyst_tokens=("sample-token",),
+        process_inline=True,
+        telemetry_rate_limit_max_requests=1,
+        telemetry_rate_limit_window_seconds=60,
+    )
+    client = TestClient(create_app(settings))
+    client.headers.update({"Authorization": "Bearer sample-token"})
+
+    payload = sample_payload(payload_id="first")
+    assert client.post("/api/v1/telemetry", json=payload).status_code == 202
+
+    duplicate = client.post("/api/v1/telemetry", json=payload)
+    assert duplicate.status_code == 202
+    assert duplicate.json()["duplicate"] is True
+
+    response = client.post("/api/v1/telemetry", json=sample_payload(payload_id="second"))
+
+    assert response.status_code == 429
+    assert response.json()["detail"]["error"] == "rate_limited"
 

@@ -1,13 +1,16 @@
 # AEGIS Mobile Security Scanner
 
+[![CI](https://github.com/samir22418/mobile_sec/actions/workflows/ci.yml/badge.svg)](https://github.com/samir22418/mobile_sec/actions/workflows/ci.yml)
+
 AEGIS is an Android mobile security scanner and lightweight EDR proof of concept.
 It collects local device posture, app inventory, selected security logs, and upload
 state so a backend/data engineering team can validate, enrich, and process the
 telemetry later.
 
 The current focus is the Android agent, sample scanner UI, and a local backend
-MVP for ingestion, normalization, risk scoring, and AI audit stubs. The legacy
-POC server remains available for simple upload smoke tests.
+MVP for ingestion, normalization, risk scoring, logs analysis, local AI audit
+flows, the Shieldy/OpenRouter analyst chatbot adapter, and a React/Vite analyst
+console. The legacy POC server remains available for simple upload smoke tests.
 
 ## What Is Included
 
@@ -47,54 +50,64 @@ mobile_sec/
   docs/               Project guides, phases, handoff notes
 ```
 
-## Quick Start
+## Quick Start — local dev
 
-Open PowerShell in the Android project:
+**Requirements:** Python 3.11–3.13, Node 18+, Android Studio (Hedgehog+).
+
+### 1. Start the full stack (one command)
 
 ```powershell
-cd C:\Users\ASUS\Desktop\mobile_sec\aegis-agent
+# From repo root — kills stale listeners, creates venv, runs migrations,
+# starts uvicorn + Vite, and waits for /health 200 before returning.
+.\tools\start_local_mvp.ps1
 ```
 
-Set Java to Android Studio's bundled JDK:
+- Backend API: `http://127.0.0.1:8080`
+- Analyst dashboard: `http://127.0.0.1:5173`
+- Health check: `http://127.0.0.1:8080/health`
+
+### 2. Build and run the Android agent
 
 ```powershell
+cd aegis-agent
 $env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'
 $env:Path="$env:JAVA_HOME\bin;$env:Path"
-```
 
-Build and test:
+# Build + unit tests
+.\gradlew.bat :aegis-agent:testDebugUnitTest :app:assembleDebug
 
-```powershell
-.\gradlew.bat :aegis-agent:testDebugUnitTest
-.\gradlew.bat :app:assembleDebug
-```
-
-Start the POC server:
-
-```powershell
-python .\poc-server\aegis_poc_server.py --host 0.0.0.0 --port 8080 --output-dir .\poc-server-data
-```
-
-Or start the backend MVP from the repository root:
-
-```powershell
-cd C:\Users\ASUS\Desktop\mobile_sec\backend
-python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
-```
-
-Run backend tests:
-
-```powershell
-cd C:\Users\ASUS\Desktop\mobile_sec\backend
-pytest
-```
-
-Install and launch the sample app on an emulator:
-
-```powershell
+# Install on a running emulator
 adb install -r .\app\build\outputs\apk\debug\app-debug.apk
 adb shell am start -n com.aegis.agent.sample/.ui.MainActivity
 ```
+
+Make sure `aegis-agent/local.properties` points at the backend:
+```properties
+AEGIS_BACKEND_URL=http://10.0.2.2:8080
+AEGIS_CLOUD_PROJECT_NUMBER=123456789012   # for Play Integrity
+```
+
+### 3. Run backend tests
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m pytest tests/ -q   # 115+ tests
+```
+
+### 4. Production docker-compose
+
+```bash
+cd backend
+cp .env.production.example .env   # fill in secrets
+mkdir -p certs
+openssl req -x509 -newkey rsa:4096 -keyout certs/aegis.key \
+  -out certs/aegis.crt -sha256 -days 365 -nodes -subj "/CN=localhost"
+docker compose up --build -d
+```
+
+All services (API, worker, Postgres, Kafka, Redis, nginx, dashboard) start with health checks and restart policies. Dashboard available at `https://localhost`.
+
+See [Demo Runbook](docs/demo-runbook.md) for the full verification guide.
 
 ## Configuration
 
@@ -121,32 +134,36 @@ AEGIS_CLOUD_PROJECT_NUMBER=123456789012
 6. Open scan details for device posture, app inventory, logs, and JSON evidence.
 7. Share or copy the analyst brief for backend/data engineering review.
 
-## Useful Documentation
+## Documentation
 
-- [Run Project Guide](docs/run-project-guide.md)
-- [Agent Implementation Handoff](docs/agent-implementation-handoff.md)
-- [Backend Data Engineering Handoff](docs/backend-data-engineering-handoff.md)
-- [Backend Server Architecture](docs/backend-server-architecture.md)
-- [Final Backend + AI Architecture](docs/final-backend-ai-architecture.md)
-- [Final Backend + AI Architecture Charts](docs/final-backend-ai-architecture-charts.md)
-- [AI/LLM Threat Analysis Architecture](docs/ai-llm-threat-analysis-architecture.md)
-- [AI/LLM Threat Analysis Charts](docs/ai-llm-threat-analysis-charts.md)
-- [Play Integrity Real Device Guide](docs/play-integrity-real-device-guide.md)
-- [UI Theme Enhancement](docs/ui-theme-enhancement.md)
-- [UI/UX Mini Scope Completion](docs/ui-ux-mini-scope-completion.md)
+| Doc | Contents |
+|---|---|
+| [Architecture Overview](docs/architecture-overview.md) | Full data-flow diagram, service map, DB schema, AI pipeline |
+| [Demo Runbook](docs/demo-runbook.md) | Step-by-step demo path + verification commands |
+| [Play Integrity Guide](docs/play-integrity-real-device-guide.md) | Real-device attestation setup |
+| [Backend Handoff](docs/backend-data-engineering-handoff.md) | Data engineering integration guide |
+| [AI Architecture](docs/ai-llm-threat-analysis-architecture.md) | LLM multi-model pipeline design |
 
-## Current Project Boundary
+## What is implemented
 
-This repository is ready for Android agent demonstration, local telemetry upload,
-and backend MVP iteration. Remaining production server work includes:
-
-- final Play Integrity token validation
-- telemetry storage
-- model/data pipelines
-- multi-model AI/LLM threat analysis
-- backend risk scoring
-- production API authentication
-- dashboard or SOC integration
+| Capability | Status |
+|---|---|
+| Android agent (root / bootloader / patch / app inventory / logs) | Done |
+| Play Integrity token collection + backend `decodeIntegrityToken` | Done |
+| Nonce / replay protection | Done |
+| FastAPI telemetry ingestion + JSON Schema validation + redaction | Done |
+| Normalisation → Postgres (SQLite for dev) via Alembic | Done |
+| Deterministic risk scoring (0–100) | Done |
+| Multi-model AI analysis (OpenRouter / Ollama / stub) | Done |
+| Kafka async pipeline + TelemetryConsumer (retry + DLQ) | Done |
+| Redis distributed rate limiting (sliding window, fallback) | Done |
+| React/Vite analyst dashboard | Done |
+| nginx TLS proxy | Done |
+| GitHub Actions CI (lint + types + 115 tests + frontend build) | Done |
+| Docker CD → GHCR on merge | Done |
+| Structured JSON logging | Done |
+| Rich `/health` endpoint (DB + Redis + Kafka) | Done |
+| Production docker-compose (all services + healthchecks) | Done |
 
 ## Validation Command
 

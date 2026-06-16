@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_session
 from app.auth.bearer import verify_analyst_token
+from app.dependencies import get_session
 from app.models import AnalystFeedback
 from app.schemas.feedback import FeedbackRequest
 

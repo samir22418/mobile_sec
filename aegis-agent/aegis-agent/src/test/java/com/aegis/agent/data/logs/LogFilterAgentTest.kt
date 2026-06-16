@@ -7,8 +7,10 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
@@ -188,6 +190,18 @@ class LogFilterAgentTest {
         fun `benign messages are not matched`(message: String) {
             val result = filter.evaluate("ActivityManager", LogLevel.DEBUG, message)
             assertNull(result, "Expected no match for benign: $message")
+        }
+
+        @Test
+        @DisplayName("routine root detection diagnostics are not treated as threats")
+        fun `root detection diagnostics are not matched`() {
+            val result = filter.evaluate(
+                tag     = "DeviceScanner",
+                level   = LogLevel.DEBUG,
+                message = "DeviceScanner: root detection - su=false testKeys=false superuserApk=false isRooted=false",
+            )
+
+            assertNull(result, "Expected routine scanner telemetry to be discarded")
         }
 
         @Test
@@ -439,6 +453,27 @@ class LogFilterAgentTest {
             assertEquals(1, batch.size)
             assertEquals("SecurityManager", batch.first().tag)
             assertEquals(0, agent.bufferedCount())
+        }
+
+        @Test
+        @DisplayName("collectSnapshot keeps an already-running agent active")
+        fun `collectSnapshot preserves running agent`() = testScope.runTest {
+            every { mockReader.lines() } returns flow {
+                emit(RawLogLine(LogLevel.ERROR, "SecurityManager", "permission denied uid=0", "raw1"))
+                awaitCancellation()
+            }
+
+            agent.start()
+            advanceTimeBy(100L)
+            assertTrue(agent.isRunning())
+
+            val deferred = async {
+                agent.collectSnapshot(windowMs = 100L, maxEntries = 1)
+            }
+            advanceTimeBy(500L)
+            deferred.await()
+
+            assertTrue(agent.isRunning())
         }
     }
 

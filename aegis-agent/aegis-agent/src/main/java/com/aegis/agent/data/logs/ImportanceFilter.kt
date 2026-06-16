@@ -131,7 +131,10 @@ class ImportanceFilter {
          */
         val THREAT_PATTERNS: List<String> = listOf(
             """permission\s+denied""",          // e.g. "permission denied" with optional whitespace
-            """\broot\b""",                     // word-boundary "root" — avoids matching "bootstrap"
+            """\broot(?:ed|ing)\b""",            // concrete root/rooted signals; avoids routine "root detection" diagnostics
+            """\broot\s+(?:access|shell|user|granted|detected)\b""",
+            """\bsu\s+(?:binary|access|shell)\b""",
+            """\bsuperuser\b""",
             """\binjection\b""",                // SQL / code injection keywords
             """\bexploit\b""",                  // generic exploit mention
             """brute[\s\-_]?force""",           // "brute force", "brute-force", "bruteforce"

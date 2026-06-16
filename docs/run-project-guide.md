@@ -42,18 +42,32 @@ AEGIS_BACKEND_URL=http://10.0.2.2:8080
 
 `10.0.2.2` lets the Android emulator reach the host machine.
 
-## 5. Start POC Server
+## 5. Start Local Backend MVP
 
-In the project folder:
+From the repository root, start the FastAPI backend, Ollama-backed local AI
+analyzers, and React dashboard:
 
 ```powershell
-python .\poc-server\aegis_poc_server.py --host 0.0.0.0 --port 8080 --output-dir .\poc-server-data
+cd C:\Users\ASUS\Desktop\mobile_sec
+.\tools\start_local_mvp.ps1
 ```
 
 Health check:
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8080/health
+```
+
+Dashboard:
+
+```text
+http://127.0.0.1:5173/
+```
+
+Token admin page:
+
+```text
+http://127.0.0.1:8080/
 ```
 
 ## 6. Start Emulator
@@ -102,6 +116,7 @@ In the sample app:
    - payload ID
    - important log count
    - recent scans
+   - AI model runs and risk decision trace
 4. Tap `Open Scan Detail`.
 5. Review:
    - analyst brief
@@ -112,29 +127,37 @@ In the sample app:
 
 ## 9. Check Uploaded Telemetry
 
-Telemetry is written to:
+Telemetry is stored in the local backend database and raw payload folder:
 
 ```text
-poc-server-data/telemetry.jsonl
+backend-data/aegis.db
+backend-data/raw-payloads/
 ```
 
-Read it:
+Check devices through the API:
 
 ```powershell
-Get-Content .\poc-server-data\telemetry.jsonl
+$headers = @{ Authorization = 'Bearer sample-token' }
+Invoke-RestMethod `
+  -Uri 'http://127.0.0.1:8080/api/v1/devices' `
+  -Headers $headers
 ```
 
-Show payload IDs:
+Check the latest uploaded device:
 
 ```powershell
-Get-Content .\poc-server-data\telemetry.jsonl | ForEach-Object {
-    ($_ | ConvertFrom-Json).payload.payload_id
-}
+Invoke-RestMethod `
+  -Uri 'http://127.0.0.1:8080/api/v1/devices/sample-device-001/latest-risk' `
+  -Headers $headers
 ```
 
 ## 10. Test Retry Behavior
 
-Enable forced server failure:
+This retry check is still easiest against the legacy POC server. For the current
+backend MVP, stop the API process, run a scan, then start the API again and wait
+for WorkManager to retry.
+
+Legacy POC forced failure:
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8080/fail?enabled=true
@@ -212,4 +235,3 @@ Final handoff:
 ```text
 agent-implementation-handoff.md
 ```
-

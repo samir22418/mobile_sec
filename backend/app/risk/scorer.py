@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from app.models import AppInventoryCurrent, DeviceReport, ImportantLog, RiskAssessment
 
-
 SENSITIVE_PERMISSIONS = {
     "android.permission.READ_SMS",
     "android.permission.SEND_SMS",
@@ -35,10 +34,16 @@ class RiskScoringService:
             score += 35
             reasons.append("Root indicators were detected.")
 
-        match device_report.integrity_verdict:
+        effective_verdict = device_report.verified_integrity_verdict or device_report.integrity_verdict
+        verified = device_report.verified_integrity_verdict is not None
+
+        match effective_verdict:
             case "FAILS":
                 score += 35
-                reasons.append("Play Integrity failed.")
+                if verified:
+                    reasons.append("Play Integrity backend-verified: device failed all integrity checks.")
+                else:
+                    reasons.append("Play Integrity failed.")
             case "REQUIRES_BACKEND_VERIFICATION":
                 score += 18
                 reasons.append("Play Integrity requires backend verification.")
@@ -50,7 +55,13 @@ class RiskScoringService:
                 reasons.append("Play Integrity did not produce a usable verdict.")
             case "MEETS_BASIC_INTEGRITY":
                 score += 10
-                reasons.append("Only basic Play Integrity is available.")
+                if verified:
+                    reasons.append("Play Integrity backend-verified: only basic integrity confirmed.")
+                else:
+                    reasons.append("Only basic Play Integrity is available.")
+            case "MEETS_DEVICE_INTEGRITY" | "MEETS_STRONG_INTEGRITY":
+                if verified:
+                    reasons.append(f"Play Integrity backend-verified: {effective_verdict}.")
 
         if device_report.bootloader_state in {"orange", "red"}:
             score += 20

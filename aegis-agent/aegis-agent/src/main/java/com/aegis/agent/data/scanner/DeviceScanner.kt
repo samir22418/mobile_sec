@@ -9,6 +9,7 @@ import com.aegis.agent.domain.model.RootDetectionResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import timber.log.Timber
@@ -86,8 +87,18 @@ class DeviceScanner @Inject constructor(
 
         // Play Integrity must be called from the Main thread (it's a Google
         // Play Services Tasks API).  Switch back to Main for the duration.
+        // withTimeoutOrNull guards against an AVD / missing Play Services hang
+        // where neither listener fires, which would stall the scan indefinitely.
         val integrity = withContext(mainDispatcher) {
-            queryIntegrity()
+            withTimeoutOrNull(INTEGRITY_TIMEOUT_MS) {
+                queryIntegrity()
+            } ?: IntegrityCheckResult(
+                verdict = IntegrityVerdict.UNAVAILABLE,
+                details = "Play Integrity timed out (${INTEGRITY_TIMEOUT_MS / 1000}s). " +
+                    "Ensure the device has Google Play Services or set cloudProjectNumber=0 to skip.",
+            ).also {
+                Timber.w("DeviceScanner: Play Integrity timed out — scan continuing without verdict")
+            }
         }
 
         DeviceReport(
@@ -98,6 +109,8 @@ class DeviceScanner @Inject constructor(
             integrityDetails   = integrity.details,
             integrityErrorCode = integrity.errorCode,
             integrityTokenHashSha256 = integrity.tokenHashSha256,
+            integrityToken     = integrity.integrityToken,
+            integrityNonce     = integrity.integrityNonce,
             securityPatchDate  = patchDate,
             bootloaderState    = bootloader,
         ).also {
@@ -237,5 +250,6 @@ class DeviceScanner @Inject constructor(
 
     companion object {
         private const val PROP_VERIFIED_BOOT_STATE = "ro.boot.verifiedbootstate"
+        private const val INTEGRITY_TIMEOUT_MS = 10_000L
     }
 }

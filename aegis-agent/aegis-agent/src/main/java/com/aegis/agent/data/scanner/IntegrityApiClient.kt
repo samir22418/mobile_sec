@@ -47,11 +47,14 @@ class IntegrityApiClient(
             integrityManager
                 .requestIntegrityToken(tokenRequest)
                 .addOnSuccessListener { response: IntegrityTokenResponse ->
-                    val tokenHash = sha256(response.token())
+                    val token = response.token()
+                    val tokenHash = sha256(token)
                     val result = IntegrityCheckResult(
                         verdict = IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION,
-                        details = "Play Integrity token received. Send it to the backend and decode it there for MEETS_* or FAILS.",
+                        details = "Play Integrity token received. Backend will call decodeIntegrityToken for the final verdict.",
                         tokenHashSha256 = tokenHash,
+                        integrityToken = token,
+                        integrityNonce = nonce,
                     )
                     Timber.i("IntegrityApiClient: token received hash=$tokenHash")
                     if (continuation.isActive) continuation.resume(result)

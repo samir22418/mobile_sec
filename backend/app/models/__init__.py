@@ -1,8 +1,21 @@
-from app.models.telemetry import TelemetryPayload, DeviceReport, AppInventoryCurrent, ImportantLog
-from app.models.risk import RiskAssessment
-from app.models.ai import AIModelRun
+from app.models.ai import (
+    AIEvidenceBundle,
+    AIFinding,
+    AIModelRun,
+    AIRiskDecision,
+    ChatAction,
+    ChatMessage,
+    ChatSession,
+)
 from app.models.enrollment import EnrollmentToken
 from app.models.feedback import AnalystFeedback
+from app.models.risk import RiskAssessment
+from app.models.telemetry import (
+    AppInventoryCurrent,
+    DeviceReport,
+    ImportantLog,
+    TelemetryPayload,
+)
 
 __all__ = [
     "TelemetryPayload",
@@ -11,6 +24,12 @@ __all__ = [
     "ImportantLog",
     "RiskAssessment",
     "AIModelRun",
+    "AIRiskDecision",
+    "AIEvidenceBundle",
+    "AIFinding",
+    "ChatAction",
+    "ChatMessage",
+    "ChatSession",
     "EnrollmentToken",
     "AnalystFeedback",
 ]

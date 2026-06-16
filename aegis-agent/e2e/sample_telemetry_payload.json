@@ -1,0 +1,71 @@
+{
+  "payload_id": "11111111-2222-3333-4444-555555555555",
+  "scan_id": 1,
+  "device_id": "test-device-001",
+  "created_at_epoch_ms": 1750000000000,
+  "device_report": {
+    "device_id": "test-device-001",
+    "timestamp_epoch_ms": 1750000000000,
+    "root_detection": {
+      "su_binary_found": false,
+      "test_keys_found": false,
+      "superuser_apk_found": false,
+      "is_rooted": false
+    },
+    "integrity_verdict": "REQUIRES_BACKEND_VERIFICATION",
+    "integrity_details": "Integrity token received, awaiting backend decode",
+    "integrity_error_code": null,
+    "integrity_token_hash_sha256": "a1b2c3d4e5f60718293a4b5c6d7e8f90112233445566778899aabbccddeeff0",
+    "security_patch_date": "2026-05-01",
+    "bootloader_state": "locked"
+  },
+  "app_snapshot": {
+    "device_id": "test-device-001",
+    "timestamp_epoch_ms": 1750000000000,
+    "total_app_count": 2,
+    "is_delta": false,
+    "apps": [
+      {
+        "package_name": "com.android.chrome",
+        "version_name": "125.0.6422.0",
+        "version_code": 642200000,
+        "apk_sha256": "0000000000000000000000000000000000000000000000000000000000000",
+        "cert_sha256": "1111111111111111111111111111111111111111111111111111111111111",
+        "requested_permissions": [
+          "android.permission.INTERNET",
+          "android.permission.ACCESS_NETWORK_STATE"
+        ],
+        "install_source": "PLAY_STORE",
+        "is_system_app": false,
+        "first_install_time": 1700000000000,
+        "last_update_time": 1749000000000
+      },
+      {
+        "package_name": "com.example.sideloaded",
+        "version_name": "1.0",
+        "version_code": 1,
+        "apk_sha256": "2222222222222222222222222222222222222222222222222222222222222",
+        "cert_sha256": "3333333333333333333333333333333333333333333333333333333333333",
+        "requested_permissions": [
+          "android.permission.READ_SMS",
+          "android.permission.SYSTEM_ALERT_WINDOW"
+        ],
+        "install_source": "SIDELOADED",
+        "is_system_app": false,
+        "first_install_time": 1748000000000,
+        "last_update_time": 1748000000000
+      }
+    ]
+  },
+  "important_logs": [
+    {
+      "id": 1,
+      "timestamp_epoch_ms": 1750000000000,
+      "device_id": "test-device-001",
+      "tag": "AuthManager",
+      "level": "ERROR",
+      "message": "Failed login attempt for user admin: invalid certificate",
+      "matched_rule": "THREAT_REGEX"
+    }
+  ]
+}

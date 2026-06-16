@@ -1,4 +1,3 @@
-from app.consumers.storage_consumer import StorageConsumer
-from app.consumers.risk_consumer import RiskConsumer
+from app.consumers.telemetry_consumer import TelemetryConsumer
 
-__all__ = ["StorageConsumer", "RiskConsumer"]
+__all__ = ["TelemetryConsumer"]

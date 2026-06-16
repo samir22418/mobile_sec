@@ -1,6 +1,6 @@
 # Backend + Android Next Implementation Stages
 
-Date: 2026-05-22
+Date: 2026-05-28
 
 ## What Was Reviewed
 
@@ -12,6 +12,25 @@ Inputs reviewed:
 - Current repository files under `backend/` and `aegis-agent/`
 
 ## Decisions From The Review
+
+## Current Status Update
+
+The local MVP now has Android-to-backend upload, device enrollment token
+creation, backend normalization/risk/AI stub processing, Streamlit dashboard,
+and worker-scoped plus SDK-lifecycle log collection.
+
+Recently fixed:
+
+- Duplicate telemetry payloads stay idempotent with `202` even when rate limiting
+  is enabled.
+- AI evidence bundles prefer the exact raw payload app snapshot instead of only
+  the current device inventory.
+- Dashboard risk trend renders as a single average-risk series.
+- `AegisSdk.init()` starts the log collector and `shutdown()` stops it; worker
+  snapshots no longer stop an already-running log collector.
+- Backend exposes `GET /api/v1/logs/analysis`, and the dashboard has a dedicated
+  Logs Analyzer screen for severity mix, rule signals, repeated clusters, device
+  pressure, log pulse, top tags, and recent redacted log stream.
 
 ### Useful Changes Kept
 
@@ -96,12 +115,13 @@ Goal: make Android to backend to dashboard reliable on one developer machine.
 
 Tasks:
 
-- Use `POST /api/v1/enrollment-tokens` to create device enrollment tokens without editing code.
-- Give the Android user the backend URL, device ID, and returned enrollment token.
-- Add a clean local database reset script for repeatable demos.
-- Add a scripted smoke test that posts one sample payload and checks latest risk.
-- Add an emulator smoke script that installs the APK, launches the app, captures logs, and checks backend payload arrival.
-- Make scan/upload status easier to inspect from the sample UI.
+- Done: use `POST /api/v1/enrollment-tokens` to create device enrollment tokens without editing code.
+- Done: give the Android user the backend URL, device ID, and returned enrollment token.
+- Done: scripted backend smoke test posts a sample payload and checks latest risk.
+- Done: emulator flow has verified app upload, backend processing, and latest risk.
+- Next: add a clean local database reset script for repeatable demos.
+- Next: add a one-command emulator smoke script that installs the APK, launches the app, captures logs, and checks backend payload arrival.
+- Next: make scan/upload/log status easier to inspect from the sample UI.
 
 Exit criteria:
 
@@ -113,10 +133,11 @@ Goal: make analyst review useful without adding heavy infrastructure.
 
 Tasks:
 
-- Run Streamlit locally at `http://127.0.0.1:8501`.
-- Show device list, latest risk, timeline, payload details, apps, logs, AI runs, and feedback.
-- Add a dashboard smoke test against the FastAPI test client or a live local server.
-- Add empty/error states for missing API token, no devices, failed payloads, and no AI runs.
+- Done: run Streamlit locally at `http://127.0.0.1:8501`.
+- Done: show device list, latest risk, timeline, payload details, apps, logs, AI runs, feedback, fleet KPIs, risk distribution, priority devices, and trend.
+- Done: add creative Logs Analyzer screen backed by `/api/v1/logs/analysis`.
+- Next: add a dashboard smoke test against a live local server.
+- Next: add stronger empty/error states for missing API token, failed payloads, and no AI runs.
 
 Exit criteria:
 

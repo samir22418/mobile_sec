@@ -45,7 +45,7 @@ python -m app.worker
 ## Docker Compose
 
 The Compose profile runs the API, a polling worker, Postgres, and the
-dashboard:
+React console:
 
 ```powershell
 cd C:\Users\ASUS\Desktop\mobile_sec\backend
@@ -53,8 +53,32 @@ docker compose up --build
 ```
 
 Compose sets `AEGIS_PROCESS_INLINE=false`, so the API accepts telemetry and the
-worker processes pending payloads in the background. Kafka/Nginx are intentionally
-not on the default path; they can be added later when the local flow is stable.
+worker processes pending payloads in the background. The React console is exposed
+on `http://127.0.0.1:5173/`. Kafka/Nginx are intentionally not on the default
+path; they can be added later when the local flow is stable.
+
+## Analyst Console
+
+The default local console is now the React/Vite app in `../frontend`. It shows
+SOC-style fleet KPIs, priority devices, payload drill-down, AI runs, Shieldy
+Chat, and a logs analyzer for redacted security signals.
+
+```powershell
+cd C:\Users\ASUS\Desktop\mobile_sec
+.\tools\start_local_mvp.ps1
+```
+
+Open:
+
+```text
+http://127.0.0.1:5173/
+```
+
+The older Streamlit dashboard remains available as a fallback:
+
+```powershell
+.\tools\start_local_mvp.ps1 -UseStreamlit
+```
 
 ## Endpoints
 
@@ -67,12 +91,37 @@ POST /api/v1/enrollment-tokens/{token_id}/revoke
 GET  /api/v1/devices/{device_id}/latest-risk
 GET  /api/v1/devices/{device_id}/timeline
 GET  /api/v1/payloads/{payload_id}
+GET  /api/v1/logs/analysis?device_id=&level=&matched_rule=&q=&limit=
+GET  /api/v1/ai/runs?device_id=&payload_id=&role=&limit=
+GET  /api/v1/ai/decisions/{payload_id}
+POST /api/v1/chat/sessions
+POST /api/v1/chat/sessions/{session_id}/messages
+POST /api/v1/chat/actions/{action_id}/confirm
 POST /api/v1/findings/{finding_id}/feedback
 ```
 
 The local MVP processes telemetry inline after ingestion. The database status
 fields are still queue-ready so Redis/Celery/RQ can replace inline processing in
 a later production phase.
+
+## AI Configuration
+
+Local security analyzers use `AEGIS_LOCAL_LLM_PROVIDER=stub` by default for
+repeatable tests. The local MVP launcher sets `AEGIS_LOCAL_LLM_PROVIDER=ollama`
+with `llama3:latest`. Configure
+`AEGIS_LOCAL_LLM_BASE_URL`, `AEGIS_LOGS_MODEL`, `AEGIS_TELEMETRY_MODEL`, and
+`AEGIS_RISK_MODEL` to use local models. The dashboard chatbot is separate and
+uses OpenRouter only when `OPENROUTER_API_KEY` is configured.
+
+If Ollama is unavailable or returns invalid JSON, the backend falls back to the
+deterministic local stub output so telemetry processing stays reliable and the
+model run remains auditable.
+
+The chatbot path keeps the Shieldy-LAST2 file shape in `app/shieldy/`:
+deterministic safety checks, fast route selection, role-based OpenRouter model
+names (`ORCHESTRATOR_MODEL`, `GENERAL_MODEL`, `REPORT_MODEL`, `COMMAND_MODEL`,
+`FAST_MODEL`, `CRITIC_MODEL`), prompts, provider adapters, and
+confirm-before-action tooling for feedback/review notes.
 
 ## Create A Device Enrollment Token
 

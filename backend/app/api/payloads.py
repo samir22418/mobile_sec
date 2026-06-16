@@ -4,17 +4,20 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.dependencies import get_session
+from app.api.devices import risk_response
 from app.auth.bearer import verify_analyst_token
+from app.dependencies import get_session
 from app.models import (
+    AIEvidenceBundle,
+    AIFinding,
     AIModelRun,
+    AIRiskDecision,
     AppInventoryCurrent,
     DeviceReport,
     ImportantLog,
     RiskAssessment,
     TelemetryPayload,
 )
-from app.api.devices import risk_response
 
 router = APIRouter()
 
@@ -34,6 +37,9 @@ def payload_lookup(
     ).all()
     logs = session.scalars(select(ImportantLog).where(ImportantLog.payload_id == payload_id)).all()
     ai_runs = session.scalars(select(AIModelRun).where(AIModelRun.payload_id == payload_id)).all()
+    ai_decision = session.scalar(select(AIRiskDecision).where(AIRiskDecision.payload_id == payload_id))
+    ai_bundles = session.scalars(select(AIEvidenceBundle).where(AIEvidenceBundle.payload_id == payload_id)).all()
+    ai_findings = session.scalars(select(AIFinding).where(AIFinding.payload_id == payload_id)).all()
     risk = risk_response(assessment) if assessment else None
     return {
         "payload_id": record.payload_id,
@@ -49,6 +55,9 @@ def payload_lookup(
         "apps": [serialize_app(app) for app in apps],
         "logs": [serialize_log(log) for log in logs],
         "ai_runs": [serialize_ai_run(run) for run in ai_runs],
+        "ai_decision": serialize_ai_decision(ai_decision),
+        "ai_evidence_bundles": [serialize_evidence_bundle(bundle) for bundle in ai_bundles],
+        "ai_findings": [serialize_ai_finding(finding) for finding in ai_findings],
     }
 
 
@@ -109,12 +118,57 @@ def serialize_ai_run(run: AIModelRun) -> dict:
     return {
         "id": run.id,
         "model_role": run.model_role,
+        "provider": run.provider,
         "model_used": run.model_name,
         "model_name": run.model_name,
         "prompt_version": run.prompt_version,
         "status": run.status,
-        "finding_summary": first_finding.get("title") or output.get("risk_label") or run.status,
+        "finding_summary": first_finding.get("title") or output.get("label") or output.get("risk_label") or run.status,
         "confidence_score": int(float(output.get("confidence", 0)) * 100) if isinstance(output, dict) else 0,
         "output": output,
         "created_at": run.created_at.isoformat(),
+    }
+
+
+def serialize_ai_decision(decision: AIRiskDecision | None) -> dict | None:
+    if decision is None:
+        return None
+    return {
+        "deterministic_score": decision.deterministic_score,
+        "deterministic_label": decision.deterministic_label,
+        "final_score": decision.final_score,
+        "final_label": decision.final_label,
+        "confidence": decision.confidence,
+        "reasons": json.loads(decision.reasons_json),
+        "evidence_refs": json.loads(decision.evidence_refs_json),
+        "recommended_action": decision.recommended_action,
+        "used_ai_final": decision.used_ai_final,
+        "status": decision.status,
+        "created_at": decision.created_at.isoformat(),
+    }
+
+
+def serialize_evidence_bundle(bundle: AIEvidenceBundle) -> dict:
+    return {
+        "id": bundle.id,
+        "bundle_stage": bundle.bundle_stage,
+        "bundle_hash": bundle.bundle_hash,
+        "router_path": bundle.router_path,
+        "bundle": json.loads(bundle.bundle_json),
+        "created_at": bundle.created_at.isoformat(),
+    }
+
+
+def serialize_ai_finding(finding: AIFinding) -> dict:
+    return {
+        "id": finding.id,
+        "model_run_id": finding.model_run_id,
+        "source_role": finding.source_role,
+        "title": finding.title,
+        "severity": finding.severity,
+        "confidence": finding.confidence,
+        "reason": finding.reason,
+        "evidence_refs": json.loads(finding.evidence_refs_json),
+        "status": finding.status,
+        "created_at": finding.created_at.isoformat(),
     }

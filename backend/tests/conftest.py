@@ -1,18 +1,32 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
+import app.models  # noqa: F401 — ensure all ORM classes register with Base.metadata
 from app.config import BACKEND_DIR, Settings
+from app.database import Base, make_engine
 from app.main import create_app
 
+_POSTGRES_TEST_URL = os.environ.get("AEGIS_TEST_POSTGRES_URL", "")
+_DB_BACKENDS = ["sqlite"] + (["postgres"] if _POSTGRES_TEST_URL else [])
 
-@pytest.fixture
-def app(tmp_path: Path):
+
+@pytest.fixture(params=_DB_BACKENDS)
+def app(request, tmp_path: Path):
+    if request.param == "postgres":
+        engine = make_engine(_POSTGRES_TEST_URL)
+        Base.metadata.drop_all(engine)
+        engine.dispose()
+        db_url = _POSTGRES_TEST_URL
+    else:
+        db_url = f"sqlite:///{(tmp_path / 'aegis-test.db').as_posix()}"
+
     settings = Settings(
-        database_url=f"sqlite:///{(tmp_path / 'aegis-test.db').as_posix()}",
+        database_url=db_url,
         raw_payload_dir=tmp_path / "raw",
         telemetry_schema_path=BACKEND_DIR / "app" / "schemas" / "telemetry_schema_v1.json",
         accepted_enrollment_tokens=("sample-token",),

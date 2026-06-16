@@ -205,6 +205,9 @@ class LogFilterAgent @Inject constructor(
      */
     suspend fun bufferedCount(): Int = bufferMutex.withLock { buffer.size }
 
+    /** Whether the live logcat reader is currently active. */
+    fun isRunning(): Boolean = readerJob?.isActive == true
+
     /**
      * Starts a short worker-scoped log collection window and returns a bounded
      * snapshot of important logs.
@@ -217,6 +220,7 @@ class LogFilterAgent @Inject constructor(
         windowMs: Long = SNAPSHOT_WINDOW_MS,
         maxEntries: Int = SNAPSHOT_MAX_SIZE,
     ): List<ImportantLog> = coroutineScope {
+        val wasRunning = readerJob?.isActive == true
         val collected = mutableListOf<ImportantLog>()
         val collectorJob = launch {
             filteredLogs.collect { batch ->
@@ -237,7 +241,9 @@ class LogFilterAgent @Inject constructor(
             collected.toList()
         } finally {
             collectorJob.cancel()
-            stop()
+            if (!wasRunning) {
+                stop()
+            }
         }
     }
 

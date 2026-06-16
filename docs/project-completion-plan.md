@@ -189,3 +189,9 @@ Add a second Activity that shows the full JSON payload of a completed scan recor
 - Watch Logcat for the full scan → upload → success flow
 - Verify scan detail screen shows formatted JSON
 - Kill the app process and verify config survives restart via `BootReceiver`
+# Status Note
+
+This document is historical as of 2026-05-28. The active backend, Android upload
+flow, encrypted config persistence, log integration, scan details screen,
+dashboard, and end-to-end emulator path have since been implemented. Use
+`docs/backend-android-next-implementation-stages.md` for the current plan.

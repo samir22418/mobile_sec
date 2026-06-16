@@ -48,9 +48,9 @@ enum class IntegrityVerdict {
 /**
  * Raw client-side result from the Play Integrity request.
  *
- * The token itself is not persisted because it should be sent to a trusted
- * backend for decodeIntegrityToken verification. We keep a SHA-256 hash so logs,
- * saved scans, and backend traces can be correlated without storing the token.
+ * The token is included so the backend can call Google's decodeIntegrityToken
+ * API for the authoritative MEETS_* or FAILS verdict.  A SHA-256 hash is also
+ * kept for log correlation without re-exposing the full token.
  */
 @Serializable
 data class IntegrityCheckResult(
@@ -65,6 +65,14 @@ data class IntegrityCheckResult(
 
     @SerialName("token_hash_sha256")
     val tokenHashSha256: String? = null,
+
+    /** Encrypted Play Integrity token to be verified by the backend. */
+    @SerialName("integrity_token")
+    val integrityToken: String? = null,
+
+    /** Nonce that was bound into the token request — used for replay protection. */
+    @SerialName("integrity_nonce")
+    val integrityNonce: String? = null,
 )
 
 /**
@@ -115,6 +123,14 @@ data class DeviceReport(
 
     @SerialName("integrity_token_hash_sha256")
     val integrityTokenHashSha256: String? = null,
+
+    /** Raw encrypted token for backend verification. */
+    @SerialName("integrity_token")
+    val integrityToken: String? = null,
+
+    /** Nonce used when requesting the token — included for replay protection. */
+    @SerialName("integrity_nonce")
+    val integrityNonce: String? = null,
 
     @SerialName("security_patch_date")
     val securityPatchDate: String,

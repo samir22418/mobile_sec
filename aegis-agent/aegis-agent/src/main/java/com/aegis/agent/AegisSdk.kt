@@ -9,11 +9,16 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
+import com.aegis.agent.data.logs.LogFilterAgent
 import com.aegis.agent.data.persistence.ConfigRepository
 import com.aegis.agent.data.worker.TelemetrySyncWorker
 import com.aegis.agent.di.AgentConfigHolder
 import com.aegis.agent.domain.model.AgentConfig
 import com.aegis.agent.domain.model.ScanTrigger
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
@@ -49,6 +54,7 @@ object AegisSdk {
 
         Timber.d("AegisSdk: initialising for device=${config.deviceId}")
 
+        startLogCollection(appContext)
         schedulePeriodicSync(appContext, config)
 
         isInitialised = true
@@ -61,6 +67,7 @@ object AegisSdk {
      */
     fun shutdown(context: Context) {
         val appContext = context.applicationContext
+        stopLogCollection(appContext)
         WorkManager.getInstance(appContext)
             .cancelAllWorkByTag(TelemetrySyncWorker.TAG)
         ConfigRepository(appContext).clear()
@@ -126,5 +133,33 @@ object AegisSdk {
             ExistingPeriodicWorkPolicy.KEEP,
             syncRequest
         )
+    }
+
+    private fun startLogCollection(context: Context) {
+        runCatching {
+            sdkEntryPoint(context).logFilterAgent().start()
+        }.onFailure { error ->
+            Timber.w(error, "AegisSdk: log collection could not be started")
+        }
+    }
+
+    private fun stopLogCollection(context: Context) {
+        runCatching {
+            sdkEntryPoint(context).logFilterAgent().stop()
+        }.onFailure { error ->
+            Timber.w(error, "AegisSdk: log collection could not be stopped")
+        }
+    }
+
+    private fun sdkEntryPoint(context: Context): AegisSdkEntryPoint =
+        EntryPointAccessors.fromApplication(
+            context.applicationContext,
+            AegisSdkEntryPoint::class.java,
+        )
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    internal interface AegisSdkEntryPoint {
+        fun logFilterAgent(): LogFilterAgent
     }
 }
