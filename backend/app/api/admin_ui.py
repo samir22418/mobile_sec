@@ -21,39 +21,53 @@ ADMIN_HTML = """
   <title>AEGIS Admin</title>
   <style>
     :root {
-      color-scheme: light;
-      --bg: #f7f9fc;
-      --surface: #ffffff;
-      --ink: #182033;
-      --muted: #617089;
-      --line: #d8e0eb;
-      --blue: #2563eb;
-      --green: #16a34a;
-      --red: #dc2626;
-      --yellow: #d97706;
+      color-scheme: dark;
+      --bg:      #080D13;
+      --surface: #111922;
+      --surface2: #182535;
+      --ink:     #F4F8FB;
+      --muted:   #8FA0B2;
+      --line:    #203040;
+      --blue:    #64D2FF;
+      --violet:  #A78BFA;
+      --green:   #46D39A;
+      --red:     #FF6B6B;
+      --yellow:  #F4B740;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      background: var(--bg);
+      background: radial-gradient(ellipse 80% 50% at 20% -10%, rgba(100,210,255,.06) 0%, transparent 60%),
+                  linear-gradient(180deg, #080D13 0%, #111922 44%, #080D12 100%);
+      min-height: 100vh;
       color: var(--ink);
-      font-family: "Segoe UI", Arial, sans-serif;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
       letter-spacing: 0;
     }
     header {
-      padding: 28px 32px 18px;
+      padding: 24px 32px 18px;
       border-bottom: 1px solid var(--line);
-      background: var(--surface);
+      background: rgba(13,20,28,.92);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      gap: 14px;
     }
+    header svg { flex-shrink: 0; }
+    header div { flex: 1; }
     h1 {
       margin: 0;
-      font-size: 30px;
+      font-size: 26px;
       line-height: 1.2;
+      background: linear-gradient(90deg, #64D2FF, #A78BFA);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     header p {
-      margin: 8px 0 0;
+      margin: 6px 0 0;
       color: var(--muted);
-      font-size: 15px;
+      font-size: 14px;
     }
     main {
       width: min(1180px, calc(100% - 32px));
@@ -62,14 +76,17 @@ ADMIN_HTML = """
       gap: 18px;
     }
     section {
-      background: var(--surface);
+      background: rgba(17,25,34,.84);
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 18px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.45);
     }
     h2 {
       margin: 0 0 14px;
-      font-size: 18px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ink);
     }
     .grid {
       display: grid;
@@ -90,10 +107,10 @@ ADMIN_HTML = """
       padding: 10px 12px;
       color: var(--ink);
       font: inherit;
-      background: #fff;
+      background: var(--surface2);
     }
     input:focus {
-      outline: 2px solid rgba(37, 99, 235, 0.18);
+      outline: 2px solid rgba(100,210,255,.18);
       border-color: var(--blue);
     }
     .actions {
@@ -108,23 +125,28 @@ ADMIN_HTML = """
       border: 1px solid var(--blue);
       border-radius: 6px;
       padding: 9px 14px;
-      background: var(--blue);
-      color: #fff;
+      background: rgba(100,210,255,.14);
+      color: var(--blue);
       font: inherit;
       font-weight: 650;
       cursor: pointer;
+      transition: background 120ms;
     }
+    button:hover { background: rgba(100,210,255,.22); }
     button.secondary {
-      background: #fff;
-      color: var(--blue);
+      background: transparent;
+      color: var(--muted);
+      border-color: var(--line);
     }
+    button.secondary:hover { background: var(--surface2); color: var(--ink); }
     button.danger {
       border-color: var(--red);
-      background: #fff;
+      background: transparent;
       color: var(--red);
     }
+    button.danger:hover { background: rgba(255,107,107,.12); }
     button:disabled {
-      opacity: 0.55;
+      opacity: 0.45;
       cursor: not-allowed;
     }
     .status {
@@ -138,9 +160,9 @@ ADMIN_HTML = """
     .token-output {
       display: none;
       margin-top: 14px;
-      border: 1px solid #b7c7ee;
+      border: 1px solid rgba(100,210,255,.25);
       border-radius: 8px;
-      background: #eef4ff;
+      background: rgba(100,210,255,.06);
       padding: 14px;
     }
     .token-output.visible { display: block; }
@@ -151,11 +173,11 @@ ADMIN_HTML = """
       margin-top: 8px;
       padding: 12px;
       border-radius: 6px;
-      background: #ffffff;
+      background: var(--bg);
       border: 1px solid var(--line);
-      color: var(--ink);
-      font-family: Consolas, "Courier New", monospace;
-      font-size: 14px;
+      color: var(--blue);
+      font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
+      font-size: 13px;
     }
     table {
       width: 100%;
@@ -170,8 +192,9 @@ ADMIN_HTML = """
     }
     th {
       color: var(--muted);
-      font-size: 12px;
+      font-size: 11px;
       text-transform: uppercase;
+      letter-spacing: .06em;
     }
     .pill {
       display: inline-block;
@@ -179,24 +202,25 @@ ADMIN_HTML = """
       padding: 3px 9px;
       font-size: 12px;
       font-weight: 650;
-      background: #e5e7eb;
-      color: #374151;
+      background: var(--surface2);
+      color: var(--muted);
     }
     .pill.active {
-      background: #dcfce7;
-      color: #166534;
+      background: rgba(70,211,154,.15);
+      color: var(--green);
     }
     .pill.revoked {
-      background: #fee2e2;
-      color: #991b1b;
+      background: rgba(255,107,107,.15);
+      color: var(--red);
     }
     .help {
       color: var(--muted);
       font-size: 13px;
       line-height: 1.55;
+      margin-bottom: 12px;
     }
     @media (max-width: 760px) {
-      header { padding: 22px 16px 16px; }
+      header { padding: 18px 16px 14px; }
       main { width: calc(100% - 20px); margin-top: 12px; }
       .grid { grid-template-columns: 1fr; }
       table, thead, tbody, th, td, tr { display: block; }
@@ -208,8 +232,17 @@ ADMIN_HTML = """
 </head>
 <body>
   <header>
-    <h1>AEGIS Admin</h1>
-    <p>Create device enrollment tokens for the Android Connect Device screen.</p>
+    <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="hg" x1="16" y1="2" x2="16" y2="30" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#64D2FF"/><stop offset="100%" stop-color="#A78BFA"/></linearGradient></defs>
+      <path d="M16 2L27 6.8V17C27 23 22 27.8 16 29.8C10 27.8 5 23 5 17V6.8Z" fill="#111922"/>
+      <path d="M16 2L27 6.8V17C27 23 22 27.8 16 29.8C10 27.8 5 23 5 17V6.8Z" fill="none" stroke="url(#hg)" stroke-width="1.5"/>
+      <path d="M16 10L20.5 22H11.5L16 10Z" fill="none" stroke="url(#hg)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+      <line x1="13" y1="18.5" x2="19" y2="18.5" stroke="url(#hg)" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <h1>AEGIS Admin</h1>
+      <p>Manage device enrollment tokens for the Android Connect Device screen.</p>
+    </div>
   </header>
   <main>
     <section>
