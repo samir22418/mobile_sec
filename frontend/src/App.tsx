@@ -18,6 +18,21 @@ import {
   Terminal,
   TriangleAlert
 } from "lucide-react";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { AegisApi } from "./api";
@@ -230,6 +245,28 @@ function Overview({
         <Metric label="Critical" value={metrics.critical} tone="danger" />
         <Metric label="AI Runs" value={metrics.aiRuns} tone="ai" />
       </section>
+      {devices.length > 0 && (
+        <section className="split-grid">
+          <FleetRiskDonut devices={devices} />
+          <div className="panel">
+            <PanelTitle icon={<Activity />} title="Log Volume (7d)" />
+            {logs && logs.timeline.length > 0 ? (
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={[...logs.timeline].reverse()} margin={{ top: 4, right: 8, bottom: 0, left: -24 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#203040" vertical={false} />
+                  <XAxis dataKey="day" stroke="#8FA0B2" tick={{ fontSize: 10 }} tickFormatter={(d: string) => d.slice(5)} />
+                  <YAxis stroke="#8FA0B2" tick={{ fontSize: 10 }} />
+                  <Tooltip {...CHART_TOOLTIP} />
+                  <Bar dataKey="total" fill="#64D2FF" fillOpacity={0.7} radius={[2, 2, 0, 0]} name="Total" />
+                  <Bar dataKey="high_severity" fill="#FF6B6B" radius={[2, 2, 0, 0]} name="High severity" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyState icon={<Activity size={36} />} title="No log data" body="Log timeline appears after devices submit telemetry." />
+            )}
+          </div>
+        </section>
+      )}
       <section className="split-grid">
         <div className="panel">
           <PanelTitle icon={<Search />} title="Priority Devices" />
@@ -390,15 +427,18 @@ function Devices({
             body={selectedDevice ? `No telemetry payloads for ${selectedDevice}.` : "Select a device to see its scan history."}
           />
         ) : (
-          <div className="timeline-list">
-            {timeline.map((item) => (
-              <button key={item.payload_id} onClick={() => onSelectPayload(item.payload_id)}>
-                <strong>Scan {item.scan_id}</strong>
-                <span>{item.processing_status}</span>
-                <RiskBadge label={item.risk_label || item.risk?.risk_label || "UNKNOWN"} score={item.risk_score || item.risk?.risk_score || 0} />
-              </button>
-            ))}
-          </div>
+          <>
+            <ScoreTimeline timeline={timeline} />
+            <div className="timeline-list">
+              {timeline.map((item) => (
+                <button key={item.payload_id} onClick={() => onSelectPayload(item.payload_id)}>
+                  <strong>Scan {item.scan_id}</strong>
+                  <span>{item.processing_status}</span>
+                  <RiskBadge label={item.risk_label || item.risk?.risk_label || "UNKNOWN"} score={item.risk_score || item.risk?.risk_score || 0} />
+                </button>
+              ))}
+            </div>
+          </>
         )}
       </div>
       <PayloadPanel payload={payload} loading={loading} />
@@ -512,7 +552,6 @@ function LogsPanel({ logs, loading }: { logs: LogAnalysis | null; loading: boole
     );
   }
 
-  const maxLevelCount = Math.max(1, ...Object.values(logs.by_level));
   const timelineEntries = [...(logs.timeline || [])].reverse().slice(0, 7);
 
   return (
@@ -546,15 +585,7 @@ function LogsPanel({ logs, loading }: { logs: LogAnalysis | null; loading: boole
       </div>
       <div className="panel">
         <PanelTitle icon={<Activity />} title="By Level" />
-        <div className="bar-list">
-          {Object.entries(logs.by_level).map(([level, count]) => (
-            <div className="bar-row" key={level}>
-              <span className={`log-level ${LOG_LEVEL_TONE[level] || "debug"}`}>{level}</span>
-              <div><i style={{ width: `${Math.round((count / maxLevelCount) * 100)}%` }} /></div>
-              <b>{count}</b>
-            </div>
-          ))}
-        </div>
+        <LogLevelChart byLevel={logs.by_level} />
 
         <PanelTitle icon={<TriangleAlert />} title="Repeated Clusters" />
         {logs.clusters.length === 0 ? (
@@ -979,6 +1010,109 @@ function PanelTitle({ icon, title }: { icon: ReactNode; title: string }) {
 function RiskBadge({ label, score }: { label: string; score: number }) {
   const tone = score >= 80 ? "critical" : score >= 50 ? "high" : score >= 25 ? "medium" : "low";
   return <span className={`risk-badge risk-${tone}`}>{label} {score}</span>;
+}
+
+// ─── Charts ──────────────────────────────────────────────────────────────────
+
+const CHART_TOOLTIP = {
+  contentStyle: { background: "#111922", border: "1px solid #203040", borderRadius: 8, fontSize: 12 },
+  labelStyle: { color: "#F4F8FB" },
+  itemStyle: { color: "#B9C4CF" },
+};
+
+const RISK_PIE_COLORS: Record<string, string> = {
+  Critical: "#FF6B6B",
+  High: "#F97316",
+  Medium: "#F4B740",
+  Low: "#46D39A",
+};
+
+function FleetRiskDonut({ devices }: { devices: DeviceSummary[] }) {
+  if (devices.length === 0) return null;
+  const counts: Record<string, number> = { Critical: 0, High: 0, Medium: 0, Low: 0 };
+  for (const d of devices) {
+    const s = d.latest_risk_score;
+    if (s >= 80) counts.Critical++;
+    else if (s >= 50) counts.High++;
+    else if (s >= 25) counts.Medium++;
+    else counts.Low++;
+  }
+  const data = Object.entries(counts)
+    .filter(([, v]) => v > 0)
+    .map(([name, value]) => ({ name, value, color: RISK_PIE_COLORS[name] }));
+  return (
+    <div className="panel">
+      <PanelTitle icon={<Gauge />} title="Fleet Risk Distribution" />
+      <div className="chart-donut-wrap">
+        <ResponsiveContainer width="100%" height={180}>
+          <PieChart>
+            <Pie data={data} cx="50%" cy="50%" innerRadius={52} outerRadius={80} dataKey="value" paddingAngle={3}>
+              {data.map((entry) => <Cell key={entry.name} fill={entry.color} />)}
+            </Pie>
+            <Tooltip {...CHART_TOOLTIP} />
+            <Legend iconType="circle" iconSize={8} formatter={(v) => <span style={{ color: "#B9C4CF", fontSize: 12 }}>{v}</span>} />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="chart-donut-center">
+          <strong>{devices.length}</strong>
+          <span>devices</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ScoreTimeline({ timeline }: { timeline: TimelineItem[] }) {
+  if (timeline.length < 2) return null;
+  const data = [...timeline]
+    .sort((a, b) => a.created_at_epoch_ms - b.created_at_epoch_ms)
+    .map((item) => ({
+      date: new Date(item.created_at_epoch_ms).toLocaleDateString("en", { month: "short", day: "numeric" }),
+      score: item.risk_score ?? item.risk?.risk_score ?? 0,
+    }));
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <ResponsiveContainer width="100%" height={110}>
+        <AreaChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: -24 }}>
+          <defs>
+            <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#64D2FF" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#64D2FF" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#203040" />
+          <XAxis dataKey="date" stroke="#8FA0B2" tick={{ fontSize: 10 }} />
+          <YAxis domain={[0, 100]} stroke="#8FA0B2" tick={{ fontSize: 10 }} />
+          <Tooltip {...CHART_TOOLTIP} />
+          <Area type="monotone" dataKey="score" stroke="#64D2FF" fill="url(#scoreGrad)" strokeWidth={2} dot={false} name="Risk score" />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function LogLevelChart({ byLevel }: { byLevel: Record<string, number> }) {
+  const LEVEL_COLOR: Record<string, string> = {
+    ERROR: "#FF6B6B", WARN: "#F4B740", WARNING: "#F4B740",
+    INFO: "#64D2FF", DEBUG: "#8FA0B2", VERBOSE: "#A78BFA",
+  };
+  const data = Object.entries(byLevel)
+    .map(([level, count]) => ({ level, count, color: LEVEL_COLOR[level.toUpperCase()] || "#64D2FF" }))
+    .sort((a, b) => b.count - a.count);
+  const h = Math.max(80, data.length * 36 + 20);
+  return (
+    <ResponsiveContainer width="100%" height={h}>
+      <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 52 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#203040" horizontal={false} />
+        <XAxis type="number" stroke="#8FA0B2" tick={{ fontSize: 10 }} />
+        <YAxis type="category" dataKey="level" stroke="#8FA0B2" tick={{ fontSize: 11, fontFamily: "var(--font-mono)" }} width={52} />
+        <Tooltip {...CHART_TOOLTIP} />
+        <Bar dataKey="count" name="Count" radius={[0, 4, 4, 0]}>
+          {data.map((entry) => <Cell key={entry.level} fill={entry.color} />)}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
 }
 
 // ─── AI pipeline helpers ─────────────────────────────────────────────────────
