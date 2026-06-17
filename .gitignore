@@ -21,3 +21,24 @@ backend/.coverage*
 docs/generated/
 verify_output.txt
 *.bat
+
+# Diagnostic / session output files
+backend_real_copy.txt
+chat_check*.txt
+diag_output.txt
+keystore_info.txt
+ollama_models.txt
+prove_ai.txt
+running_check.txt
+verify_real.txt
+
+# PDF exports of docs (source .md is tracked)
+CONFIGURATION_AND_CREDENTIALS.pdf
+
+# Legacy / stale directories
+anas/
+
+# Temp backend scripts
+backend/_run_real.py
+backend/prove_ai.py
+backend/verify_chat.py
