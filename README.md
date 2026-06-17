@@ -7,10 +7,14 @@ It collects local device posture, app inventory, selected security logs, and upl
 state so a backend/data engineering team can validate, enrich, and process the
 telemetry later.
 
-The current focus is the Android agent, sample scanner UI, and a local backend
-MVP for ingestion, normalization, risk scoring, logs analysis, local AI audit
-flows, the Shieldy/OpenRouter analyst chatbot adapter, and a React/Vite analyst
-console. The legacy POC server remains available for simple upload smoke tests.
+The platform has two integrated components:
+
+- **Device telemetry** (this repo's main service on `:8080`): Android agent collecting
+  root detection, security patch date, bootloader state, app inventory, and logs →
+  FastAPI ingestion → deterministic + AI risk scoring → React/Vite analyst console.
+- **APK static & dynamic analysis** (APK Studio on `:8000`, in `apk-studio/`): uploads
+  APK files for disassembly, emulator sandbox, MITRE ATT&CK tagging, and AI-fused
+  risk reports. Accessible directly from the AEGIS console's "APK Analyzer" tab.
 
 ## What Is Included
 
@@ -18,22 +22,13 @@ console. The legacy POC server remains available for simple upload smoke tests.
 - Sample Android scanner app in `aegis-agent/app`
 - Local Room persistence for scan records
 - WorkManager upload queue and retry flow
-- Play Integrity token collection state
-- Root, bootloader, patch, app inventory, and important log signals
+- Root detection, bootloader state, security patch date, app inventory, and important log signals
 - Local risk brief and analyst-friendly scan detail UI
 - Dark/light theme support
 - Local FastAPI backend MVP in `backend`
+- APK Studio integration scaffold in `apk-studio/` (clone the repo there to activate)
 - POC telemetry server in `aegis-agent/poc-server`
 - Backend/data engineer handoff documentation in `docs`
-
-## Important Integrity Note
-
-If Google Play Integrity returns a token, the UI shows the device as
-`Partially verified`.
-
-That means the Android app received a Play Integrity token, but final trust still
-requires backend validation. The client does not decode or fully trust the token
-locally.
 
 ## Repository Layout
 
@@ -45,9 +40,12 @@ mobile_sec/
     app/              Sample scanner app
     poc-server/       Python POC telemetry receiver
     gradle/           Android build configuration
-  backend/            FastAPI backend MVP
+  backend/            FastAPI backend MVP (device telemetry, :8080)
+  apk-studio/         APK analysis service (clone here, runs on :8000)
+  frontend/           React/Vite analyst console (:5173)
   backend-data/       Local runtime DB/raw payloads, ignored by git
   docs/               Project guides, phases, handoff notes
+  tools/              PowerShell dev scripts (start_local_mvp.ps1)
 ```
 
 ## Quick Start — local dev
@@ -60,10 +58,14 @@ mobile_sec/
 # From repo root — kills stale listeners, creates venv, runs migrations,
 # starts uvicorn + Vite, and waits for /health 200 before returning.
 .\tools\start_local_mvp.ps1
+
+# With APK Studio (requires apk-studio/ cloned):
+.\tools\start_local_mvp.ps1 -StartApkStudio
 ```
 
 - Backend API: `http://127.0.0.1:8080`
-- Analyst dashboard: `http://127.0.0.1:5173`
+- Analyst dashboard (device telemetry + APK Analyzer tab): `http://127.0.0.1:5173`
+- APK Studio (when started): `http://127.0.0.1:8000`
 - Health check: `http://127.0.0.1:8080/health`
 
 ### 2. Build and run the Android agent
@@ -84,14 +86,14 @@ adb shell am start -n com.aegis.agent.sample/.ui.MainActivity
 Make sure `aegis-agent/local.properties` points at the backend:
 ```properties
 AEGIS_BACKEND_URL=http://10.0.2.2:8080
-AEGIS_CLOUD_PROJECT_NUMBER=123456789012   # for Play Integrity
 ```
 
 ### 3. Run backend tests
 
 ```powershell
 cd backend
-.\.venv\Scripts\python.exe -m pytest tests/ -q   # 115+ tests
+.\.venv\Scripts\python.exe -m ruff check app/ tests/   # lint gate
+.\.venv\Scripts\python.exe -m pytest tests/ -q          # 115+ tests
 ```
 
 ### 4. Production docker-compose
@@ -116,12 +118,6 @@ For emulator uploads to the local POC server, make sure
 
 ```properties
 AEGIS_BACKEND_URL=http://10.0.2.2:8080
-```
-
-For real Play Integrity testing, add your numeric Google Cloud project number:
-
-```properties
-AEGIS_CLOUD_PROJECT_NUMBER=123456789012
 ```
 
 ## Main User Flow
@@ -149,7 +145,6 @@ AEGIS_CLOUD_PROJECT_NUMBER=123456789012
 | Capability | Status |
 |---|---|
 | Android agent (root / bootloader / patch / app inventory / logs) | Done |
-| Play Integrity token collection + backend `decodeIntegrityToken` | Done |
 | Nonce / replay protection | Done |
 | FastAPI telemetry ingestion + JSON Schema validation + redaction | Done |
 | Normalisation → Postgres (SQLite for dev) via Alembic | Done |
@@ -157,7 +152,8 @@ AEGIS_CLOUD_PROJECT_NUMBER=123456789012
 | Multi-model AI analysis (OpenRouter / Ollama / stub) | Done |
 | Kafka async pipeline + TelemetryConsumer (retry + DLQ) | Done |
 | Redis distributed rate limiting (sliding window, fallback) | Done |
-| React/Vite analyst dashboard | Done |
+| React/Vite analyst dashboard with APK Analyzer tab | Done |
+| APK Studio integration scaffold (`apk-studio/`, launcher flag) | Done |
 | nginx TLS proxy | Done |
 | GitHub Actions CI (lint + types + 115 tests + frontend build) | Done |
 | Docker CD → GHCR on merge | Done |
