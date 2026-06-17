@@ -196,7 +196,7 @@ export function App() {
         )}
         {tab === "logs" && <LogsPanel logs={logs} loading={loading} />}
         {tab === "ai" && <AiCenter runs={aiRuns} payload={payload} loading={loading} />}
-        {tab === "chat" && <ChatPanel api={api} contextPayloadId={payload?.payload_id} />}
+        {tab === "chat" && <ChatPanel api={api} contextPayloadId={payload?.payload_id} payload={payload} />}
         {tab === "apk" && <ApkStudioPanel />}
       </main>
     </div>
@@ -701,6 +701,7 @@ function AiCenter({ runs, payload, loading }: { runs: AIModelRun[]; payload: Pay
                 <b>{payload.ai_decision.final_score}</b>
                 <span>Final {payload.ai_decision.final_label}</span>
               </div>
+              <ScoreCompareBar base={payload.ai_decision.deterministic_score} final={payload.ai_decision.final_score} />
               <ul className="reason-list">
                 {payload.ai_decision.evidence_refs.map((ref) => <li key={ref}>{ref}</li>)}
               </ul>
@@ -789,7 +790,7 @@ function LineageView({ payload }: { payload: PayloadDetail | null }) {
 
 // ─── Chat Panel ──────────────────────────────────────────────────────────────
 
-function ChatPanel({ api, contextPayloadId }: { api: AegisApi; contextPayloadId?: string }) {
+function ChatPanel({ api, contextPayloadId, payload }: { api: AegisApi; contextPayloadId?: string; payload: PayloadDetail | null }) {
   const [sessionId, setSessionId] = useState<string>("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [actions, setActions] = useState<ChatAction[]>([]);
@@ -855,19 +856,25 @@ function ChatPanel({ api, contextPayloadId }: { api: AegisApi; contextPayloadId?
           </button>
         </div>
       </div>
-      <div className="panel">
-        <PanelTitle icon={<CheckCircle2 />} title="Pending Actions" />
-        {actions.length === 0 ? (
-          <p className="empty">No pending actions.</p>
-        ) : (
-          actions.map((action) => (
-            <article className="action-card" key={action.id}>
-              <b>{action.tool_name}</b>
-              <span>{action.status}</span>
-              <button onClick={async () => setActions([await api.confirmAction(action.id)])}>Confirm</button>
-            </article>
-          ))
-        )}
+      <div className="chat-sidebar">
+        <div className="panel">
+          <PanelTitle icon={<Shield />} title="Chat Context" />
+          <ChatContextCard payload={payload} />
+        </div>
+        <div className="panel">
+          <PanelTitle icon={<CheckCircle2 />} title="Pending Actions" />
+          {actions.length === 0 ? (
+            <p className="empty">No pending actions.</p>
+          ) : (
+            actions.map((action) => (
+              <article className="action-card" key={action.id}>
+                <b>{action.tool_name}</b>
+                <span>{action.status}</span>
+                <button onClick={async () => setActions([await api.confirmAction(action.id)])}>Confirm</button>
+              </article>
+            ))
+          )}
+        </div>
       </div>
     </section>
   );
@@ -1026,6 +1033,72 @@ const RISK_PIE_COLORS: Record<string, string> = {
   Medium: "#F4B740",
   Low: "#46D39A",
 };
+
+function scoreTone(s: number) {
+  return s >= 80 ? "critical" : s >= 50 ? "high" : s >= 25 ? "medium" : "low";
+}
+
+function ScoreCompareBar({ base, final: finalScore }: { base: number; final: number }) {
+  return (
+    <div className="score-compare">
+      {([["Deterministic baseline", base], ["AI-adjusted final", finalScore]] as [string, number][]).map(([label, score]) => (
+        <div key={label} className="score-bar-row">
+          <span>{label}</span>
+          <div className="score-bar-track">
+            <div className="score-bar-fill" style={{ width: `${score}%`, background: `var(--risk-${scoreTone(score)})` }} />
+          </div>
+          <b>{score}</b>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ChatContextCard({ payload }: { payload: PayloadDetail | null }) {
+  if (!payload) {
+    return (
+      <EmptyState
+        icon={<Shield size={24} />}
+        title="No device selected"
+        body="Select a device in the Devices tab to ground Shieldy on a specific payload."
+      />
+    );
+  }
+  const risk = payload.risk;
+  const report = payload.device_report;
+  const tone = risk ? scoreTone(risk.risk_score) : "unknown";
+  return (
+    <div className="context-card">
+      <code className="context-device-id">{payload.device_id.length > 22 ? payload.device_id.slice(0, 22) + "…" : payload.device_id}</code>
+      <div className="context-row">
+        <span>Risk</span>
+        {risk
+          ? <span className={`risk-badge risk-${tone}`}>{risk.risk_label} {risk.risk_score}</span>
+          : <span className="risk-badge risk-unknown">Unknown</span>}
+      </div>
+      <div className="context-row">
+        <span>Payload</span>
+        <code>{payload.payload_id.slice(0, 12)}…</code>
+      </div>
+      <div className="context-row">
+        <span>Apps</span>
+        <b>{payload.apps.length}</b>
+      </div>
+      <div className="context-row">
+        <span>Logs</span>
+        <b>{payload.logs.length}</b>
+      </div>
+      {report && (
+        <div className="context-signals">
+          {report.is_rooted && <span className="risk-badge risk-critical">Rooted</span>}
+          {report.bootloader_state === "unlocked" && <span className="risk-badge risk-high">BL Unlocked</span>}
+          {report.root_signal_count > 0 && <span className="risk-badge risk-medium">{report.root_signal_count} root signals</span>}
+        </div>
+      )}
+      <p className="context-hint">Shieldy has access to this payload's apps, logs, and AI findings.</p>
+    </div>
+  );
+}
 
 function FleetRiskDonut({ devices }: { devices: DeviceSummary[] }) {
   if (devices.length === 0) return null;

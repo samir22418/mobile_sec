@@ -1039,3 +1039,22 @@ input::placeholder {
   color: var(--text-muted);
   margin-top: 2px;
 }
+
+/* ─── Chat sidebar & context card ────────────────────────────────────────────── */
+.chat-sidebar { display: flex; flex-direction: column; gap: 18px; }
+.context-card { display: flex; flex-direction: column; gap: 8px; }
+.context-device-id { font-family: var(--font-mono); font-size: 11px; color: var(--accent); word-break: break-all; display: block; margin-bottom: 4px; }
+.context-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-secondary); }
+.context-row span:first-child { color: var(--text-muted); }
+.context-row b { color: var(--text-primary); font-weight: 600; }
+.context-row code { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); }
+.context-signals { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.context-hint { font-size: 11px; color: var(--text-muted); margin-top: 8px; line-height: 1.5; }
+
+/* ─── Score comparison bars ──────────────────────────────────────────────────── */
+.score-compare { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.score-bar-row { display: grid; grid-template-columns: 160px 1fr 36px; align-items: center; gap: 10px; font-size: 12px; }
+.score-bar-row span { color: var(--text-muted); }
+.score-bar-row b { color: var(--text-primary); font-weight: 700; text-align: right; font-size: 13px; }
+.score-bar-track { height: 8px; background: var(--bg-elevated); border-radius: var(--radius-pill); overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: var(--radius-pill); transition: width 600ms ease; }
