@@ -870,7 +870,7 @@ function ApkStudioPanel() {
 
         <div className="detail-grid" style={{ marginBottom: 20 }}>
           <span>Status</span>
-          <b style={{ color: reachable === null ? "var(--c-text-2)" : reachable ? "var(--c-success, #4ade80)" : "var(--c-danger)" }}>
+          <b style={{ color: reachable === null ? "var(--text-muted)" : reachable ? "var(--risk-low)" : "var(--risk-critical)" }}>
             {reachable === null ? "Checking…" : reachable ? "Running" : "Not reachable"}
           </b>
           <span>URL</span><b>{APK_STUDIO_URL}</b>

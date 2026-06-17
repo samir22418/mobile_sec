@@ -2,6 +2,7 @@ package com.aegis.agent.sample.ui
 
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
@@ -14,7 +15,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.aegis.agent.AegisSdk
 import com.aegis.agent.data.persistence.ScanResultRepository
-import com.aegis.agent.domain.model.IntegrityVerdict
 import com.aegis.agent.domain.model.ScanRecord
 import com.aegis.agent.domain.model.ScanStatus
 import com.aegis.agent.domain.model.UploadStatus
@@ -117,7 +117,7 @@ class MainActivity : AppCompatActivity() {
         binding.txtDeltaValue.text = record.changedAppCount?.toString() ?: "--"
         binding.txtLastScan.text = formatTime(record.completedAtEpochMs ?: record.startedAtEpochMs)
         binding.txtErrorValue.text = record.errorMessage ?: "None"
-        binding.txtIntegrityDetailsValue.text = integrityDetails(record)
+        binding.txtIntegrityDetailsValue.text = "--"
         binding.btnOpenDetails.tag = record.id
         binding.btnOpenDetails.isEnabled = true
         binding.btnShareLatest.isEnabled = true
@@ -164,6 +164,11 @@ class MainActivity : AppCompatActivity() {
         binding.txtUploadChip.text = "Upload --"
         binding.txtRootChip.text = "Root --"
         binding.txtIntegrityChip.text = "Integrity --"
+        GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(color(R.color.surface_score))
+            setStroke(4.dp, color(R.color.border_subtle))
+        }.also { binding.txtRiskScore.background = it }
         setStatusColors(color(R.color.status_neutral), color(R.color.status_neutral_surface))
     }
 
@@ -172,7 +177,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnStartScan.isEnabled = false
         binding.txtStatus.text = "Scanning"
         binding.txtPostureHeadline.text = "Collecting device posture and app inventory"
-        binding.txtIntegrityValue.text = record.integrityVerdict?.let { displayIntegrity(it) } ?: "Pending"
+        binding.txtIntegrityValue.text = "--"
         binding.txtRootValue.text = "Pending"
         setStatusColors(color(R.color.accent), color(R.color.accent_surface))
     }
@@ -181,7 +186,7 @@ class MainActivity : AppCompatActivity() {
         binding.progressScan.visibility = View.GONE
         binding.btnStartScan.isEnabled = true
         binding.txtStatus.text = "Complete"
-        binding.txtIntegrityValue.text = record.integrityVerdict?.let { displayIntegrity(it) } ?: "--"
+        binding.txtIntegrityValue.text = "--"
         binding.txtRootValue.text = when (record.isRooted) {
             true -> "Detected"
             false -> "Clean"
@@ -189,32 +194,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         val danger = color(R.color.status_danger)
-        val warn = color(R.color.status_warn)
         val good = color(R.color.status_good)
-        val riskColor = when {
-            record.isRooted == true -> danger
-            record.integrityVerdict == IntegrityVerdict.FAILS -> danger
-            record.integrityVerdict == IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION -> warn
-            record.integrityVerdict == IntegrityVerdict.NOT_CONFIGURED -> warn
-            record.integrityVerdict == IntegrityVerdict.UNAVAILABLE -> warn
-            record.integrityVerdict == IntegrityVerdict.API_ERROR -> warn
-            record.integrityVerdict == IntegrityVerdict.MEETS_BASIC_INTEGRITY -> warn
-            else -> good
-        }
-        val riskSurface = when (riskColor) {
-            danger -> color(R.color.status_danger_surface)
-            warn -> color(R.color.status_warn_surface)
-            else -> color(R.color.status_good_surface)
+        val riskColor = if (record.isRooted == true) danger else good
+        val riskSurface = if (record.isRooted == true) {
+            color(R.color.status_danger_surface)
+        } else {
+            color(R.color.status_good_surface)
         }
 
-        binding.txtPostureHeadline.text = when {
-            record.isRooted == true -> "Root signals detected"
-            record.integrityVerdict == IntegrityVerdict.FAILS -> "Integrity check failed"
-            record.integrityVerdict == IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION -> "Integrity partially verified"
-            record.integrityVerdict == IntegrityVerdict.NOT_CONFIGURED -> "Integrity setup needed"
-            record.integrityVerdict == IntegrityVerdict.UNAVAILABLE -> "Integrity unavailable"
-            record.integrityVerdict == IntegrityVerdict.API_ERROR -> "Integrity retry needed"
-            else -> "Device posture saved"
+        binding.txtPostureHeadline.text = if (record.isRooted == true) {
+            "Root signals detected"
+        } else {
+            "Device posture saved"
         }
         setStatusColors(riskColor, riskSurface)
     }
@@ -224,7 +215,7 @@ class MainActivity : AppCompatActivity() {
         binding.btnStartScan.isEnabled = true
         binding.txtStatus.text = "Failed"
         binding.txtPostureHeadline.text = "Scan stopped before completion"
-        binding.txtIntegrityValue.text = record.integrityVerdict?.let { displayIntegrity(it) } ?: "--"
+        binding.txtIntegrityValue.text = "--"
         binding.txtRootValue.text = "--"
         setStatusColors(color(R.color.status_danger), color(R.color.status_danger_surface))
     }
@@ -235,7 +226,23 @@ class MainActivity : AppCompatActivity() {
         binding.txtRiskHeadline.text = brief.headline
         binding.txtRiskReasons.text = brief.reasonText
         binding.txtRecommendedAction.text = "Recommended Action: ${brief.recommendedAction}"
+        // Circular gauge: fill with risk-level surface color, stroke with accent color
+        val (fillRes, strokeRes) = riskGaugeColors(brief.label)
+        GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(color(fillRes))
+            setStroke(4.dp, color(strokeRes))
+        }.also { binding.txtRiskScore.background = it }
     }
+
+    private fun riskGaugeColors(label: String): Pair<Int, Int> =
+        when (label) {
+            "Critical", "Blocked" -> R.color.status_danger_surface to R.color.status_danger
+            "High"                -> R.color.status_high_surface    to R.color.status_high
+            "Watch"               -> R.color.status_warn_surface    to R.color.status_warn
+            "Scanning"            -> R.color.accent_surface         to R.color.accent
+            else                  -> R.color.status_good_surface    to R.color.status_good
+        }
 
     private fun renderChips(record: ScanRecord) {
         binding.txtUploadChip.text = when (record.uploadStatus) {
@@ -260,15 +267,8 @@ class MainActivity : AppCompatActivity() {
             }
         )
 
-        binding.txtIntegrityChip.text = "Integrity ${record.integrityVerdict?.let { displayIntegrity(it) } ?: "--"}"
-        binding.txtIntegrityChip.setTextColor(
-            when (record.integrityVerdict) {
-                IntegrityVerdict.FAILS -> color(R.color.status_danger)
-                IntegrityVerdict.MEETS_STRONG_INTEGRITY,
-                IntegrityVerdict.MEETS_DEVICE_INTEGRITY -> color(R.color.status_good)
-                else -> color(R.color.status_warn)
-            }
-        )
+        binding.txtIntegrityChip.text = "Integrity --"
+        binding.txtIntegrityChip.setTextColor(color(R.color.text_muted))
     }
 
     private fun renderRecent() {
@@ -386,32 +386,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun colorForBrief(brief: RiskBrief): Int =
         when (brief.label) {
-            "Critical" -> color(R.color.status_danger)
-            "High" -> color(R.color.status_warn)
-            "Watch" -> color(R.color.accent)
-            "Scanning" -> color(R.color.accent)
-            "Blocked" -> color(R.color.status_danger)
-            else -> color(R.color.status_good)
+            "Critical", "Blocked" -> color(R.color.status_danger)
+            "High"                -> color(R.color.status_high)
+            "Watch"               -> color(R.color.status_warn)
+            "Scanning"            -> color(R.color.accent)
+            else                  -> color(R.color.status_good)
         }
-
-    private fun displayIntegrity(verdict: IntegrityVerdict): String =
-        when (verdict) {
-            IntegrityVerdict.MEETS_STRONG_INTEGRITY -> "Strong"
-            IntegrityVerdict.MEETS_DEVICE_INTEGRITY -> "Device"
-            IntegrityVerdict.MEETS_BASIC_INTEGRITY -> "Basic"
-            IntegrityVerdict.FAILS -> "Failed"
-            IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION -> "Partially verified"
-            IntegrityVerdict.NOT_CONFIGURED -> "Not configured"
-            IntegrityVerdict.UNAVAILABLE -> "Unavailable"
-            IntegrityVerdict.API_ERROR -> "API error"
-        }
-
-    private fun integrityDetails(record: ScanRecord): String {
-        val details = record.integrityDetails ?: return "No Integrity detail saved."
-        val errorCode = record.integrityErrorCode?.let { " Error code: $it." }.orEmpty()
-        val tokenHash = record.integrityTokenHashSha256?.take(12)?.let { " Token hash: $it..." }.orEmpty()
-        return details + errorCode + tokenHash
-    }
 
     private fun setStatusColors(accentColor: Int, surfaceColor: Int) {
         binding.statusCard.strokeColor = accentColor
@@ -457,7 +437,7 @@ class MainActivity : AppCompatActivity() {
             appendLine("important_log_count=${record.importantLogCount}")
             appendLine("total_app_count=${record.totalAppCount ?: "--"}")
             appendLine("changed_app_count=${record.changedAppCount ?: "--"}")
-            appendLine("integrity=${record.integrityVerdict?.let { displayIntegrity(it) } ?: "--"}")
+            appendLine("integrity=--")
             appendLine("rooted=${record.isRooted ?: "--"}")
             append(brief.analystText)
         }

@@ -118,13 +118,13 @@
 
                     <TextView
                         android:id="@+id/txtRiskScore"
-                        android:layout_width="84dp"
-                        android:layout_height="84dp"
-                        android:background="@color/surface_score"
+                        android:layout_width="96dp"
+                        android:layout_height="96dp"
+                        android:background="@drawable/bg_score_circle"
                         android:gravity="center"
                         android:text="--"
                         android:textColor="@color/text_primary"
-                        android:textSize="28sp"
+                        android:textSize="30sp"
                         android:textStyle="bold" />
 
                     <LinearLayout
@@ -176,7 +176,7 @@
                         android:layout_height="36dp"
                         android:layout_marginEnd="6dp"
                         android:layout_weight="1"
-                        android:background="@color/surface_score"
+                        android:background="@drawable/bg_chip"
                         android:gravity="center"
                         android:text="Upload --"
                         android:textColor="@color/text_secondary"
@@ -189,7 +189,7 @@
                         android:layout_height="36dp"
                         android:layout_marginStart="6dp"
                         android:layout_weight="1"
-                        android:background="@color/surface_score"
+                        android:background="@drawable/bg_chip"
                         android:gravity="center"
                         android:text="Root --"
                         android:textColor="@color/text_secondary"
@@ -202,7 +202,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="36dp"
                     android:layout_marginTop="8dp"
-                    android:background="@color/surface_score"
+                    android:background="@drawable/bg_chip"
                     android:gravity="center_vertical"
                     android:paddingStart="12dp"
                     android:paddingEnd="12dp"

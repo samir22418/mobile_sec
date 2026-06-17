@@ -130,7 +130,6 @@ class SettingsActivity : AppCompatActivity() {
             enrollmentToken = token,
             isByodMode = false,
             scanIntervalMin = 60L,
-            cloudProjectNumber = BuildConfig.AEGIS_CLOUD_PROJECT_NUMBER,
         )
     }
 
@@ -162,7 +161,6 @@ class SettingsActivity : AppCompatActivity() {
             enrollmentToken = "sample-token",
             isByodMode = false,
             scanIntervalMin = 60L,
-            cloudProjectNumber = BuildConfig.AEGIS_CLOUD_PROJECT_NUMBER,
         )
 
     private fun showStatus(message: String, isError: Boolean) {

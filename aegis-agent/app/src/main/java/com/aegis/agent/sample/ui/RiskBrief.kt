@@ -1,6 +1,5 @@
 package com.aegis.agent.sample.ui
 
-import com.aegis.agent.domain.model.IntegrityVerdict
 import com.aegis.agent.domain.model.ScanRecord
 import com.aegis.agent.domain.model.ScanStatus
 import com.aegis.agent.domain.model.UploadStatus
@@ -56,36 +55,6 @@ data class RiskBrief(
                 reasons += "Root indicators were detected."
             }
 
-            when (record.integrityVerdict) {
-                IntegrityVerdict.FAILS -> {
-                    score += 35
-                    reasons += "Play Integrity failed."
-                }
-                IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION -> {
-                    score += 18
-                    reasons += "Google Play Integrity token was received; backend verification is still required."
-                }
-                IntegrityVerdict.NOT_CONFIGURED -> {
-                    score += 18
-                    reasons += "Play Integrity is not configured for this sample build."
-                }
-                IntegrityVerdict.UNAVAILABLE,
-                IntegrityVerdict.API_ERROR -> {
-                    score += 16
-                    reasons += "Play Integrity did not produce a final usable verdict."
-                }
-                IntegrityVerdict.MEETS_BASIC_INTEGRITY -> {
-                    score += 10
-                    reasons += "Only basic integrity is available."
-                }
-                IntegrityVerdict.MEETS_DEVICE_INTEGRITY,
-                IntegrityVerdict.MEETS_STRONG_INTEGRITY -> Unit
-                null -> {
-                    score += 8
-                    reasons += "No integrity verdict is saved."
-                }
-            }
-
             val changedApps = record.changedAppCount ?: 0
             if (changedApps >= 25) {
                 score += 12
@@ -108,7 +77,7 @@ data class RiskBrief(
                 reasons += "Latest upload failed and remains queued for retry."
             }
 
-            if ((record.retryCount) > 0) {
+            if (record.retryCount > 0) {
                 score += minOf(10, record.retryCount * 3)
                 reasons += "Upload retry count is ${record.retryCount}."
             }
@@ -128,16 +97,14 @@ data class RiskBrief(
             }
             val headline = when (label) {
                 "Critical" -> "Immediate review recommended"
-                "High" -> "Backend verification recommended"
-                "Watch" -> "Review notable signals"
-                else -> "No major local signals"
+                "High"     -> "Backend verification recommended"
+                "Watch"    -> "Review notable signals"
+                else       -> "No major local signals"
             }
             val recommendedAction = when {
                 record.uploadStatus == UploadStatus.FAILED -> "Check failed upload error and wait for retry."
                 record.uploadStatus == UploadStatus.PENDING -> "Wait for automatic upload retry."
                 record.isRooted == true -> "Review root indicators before trusting this device."
-                record.integrityVerdict == IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION -> "Treat this device as partially verified until backend validation finishes."
-                record.integrityVerdict == IntegrityVerdict.NOT_CONFIGURED -> "Configure Play Integrity for stronger verdicts."
                 boundedScore >= 50 -> "Review the analyst brief and raw evidence."
                 else -> "No action needed for the local POC view."
             }
@@ -155,9 +122,9 @@ data class RiskBrief(
             if (value.isNullOrBlank()) return null
             val parts = value.split("-")
             if (parts.size != 3) return null
-            val year = parts[0].toIntOrNull() ?: return null
+            val year  = parts[0].toIntOrNull() ?: return null
             val month = parts[1].toIntOrNull() ?: return null
-            val day = parts[2].toIntOrNull() ?: return null
+            val day   = parts[2].toIntOrNull() ?: return null
             val calendar = java.util.Calendar.getInstance().apply {
                 set(year, month - 1, day, 0, 0, 0)
                 set(java.util.Calendar.MILLISECOND, 0)

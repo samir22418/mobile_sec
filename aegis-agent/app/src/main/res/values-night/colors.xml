@@ -17,6 +17,10 @@
     <color name="status_warn_surface">#281F0C</color>
     <color name="status_danger">#FF6B6B</color>
     <color name="status_danger_surface">#2A1114</color>
+    <color name="status_high">#F97316</color>
+    <color name="status_high_surface">#251508</color>
     <color name="status_neutral">#95A3B3</color>
     <color name="status_neutral_surface">#141A22</color>
+    <color name="accent_violet">#A78BFA</color>
+    <color name="accent_violet_surface">#1A1030</color>
 </resources>
