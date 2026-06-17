@@ -10,6 +10,7 @@ pydantic>=2.10,<3.0
 alembic>=1.14,<2.0
 kafka-python>=2.0,<3.0
 redis>=5.0,<6.0
+python-dotenv>=1.0,<2.0
 
 # Dev / test
 httpx>=0.28,<1.0

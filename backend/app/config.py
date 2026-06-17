@@ -7,6 +7,16 @@ from pathlib import Path
 REPO_DIR = Path(__file__).resolve().parents[2]
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 
+# Load backend/.env (if present) so OPENROUTER_API_KEY and other settings are
+# honored no matter how the app is launched. Real environment variables still
+# take precedence (load_dotenv does not override existing values).
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(BACKEND_DIR / ".env")
+except ImportError:
+    pass
+
 
 @dataclass(frozen=True)
 class Settings:
