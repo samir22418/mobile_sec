@@ -136,6 +136,7 @@ AEGIS_BACKEND_URL=http://10.0.2.2:8080
 |---|---|
 | [Architecture Overview](docs/architecture-overview.md) | Full data-flow diagram, service map, DB schema, AI pipeline |
 | [Demo Runbook](docs/demo-runbook.md) | Step-by-step demo path + verification commands |
+| [Design System](docs/design-system.md) | Color tokens, risk scale, typography, chart components |
 | [Play Integrity Guide](docs/play-integrity-real-device-guide.md) | Real-device attestation setup |
 | [Backend Handoff](docs/backend-data-engineering-handoff.md) | Data engineering integration guide |
 | [AI Architecture](docs/ai-llm-threat-analysis-architecture.md) | LLM multi-model pipeline design |
@@ -154,12 +155,23 @@ AEGIS_BACKEND_URL=http://10.0.2.2:8080
 | Redis distributed rate limiting (sliding window, fallback) | Done |
 | React/Vite analyst dashboard with APK Analyzer tab | Done |
 | APK Studio integration scaffold (`apk-studio/`, launcher flag) | Done |
+| Unified dark design system — shared tokens, risk scale, Recharts charts | Done |
 | nginx TLS proxy | Done |
 | GitHub Actions CI (lint + types + 115 tests + frontend build) | Done |
 | Docker CD → GHCR on merge | Done |
 | Structured JSON logging | Done |
 | Rich `/health` endpoint (DB + Redis + Kafka) | Done |
 | Production docker-compose (all services + healthchecks) | Done |
+
+## Visual Identity
+
+All three surfaces share one dark "cyber security" design system. See [docs/design-system.md](docs/design-system.md) for the full token reference.
+
+- **Background layers:** `#080D13` (base) → `#111922` (surface) → `#182535` (elevated)
+- **Accents:** cyan `#64D2FF` (primary / interactive) + violet `#A78BFA` (AI / MITRE)
+- **Risk scale (identical everywhere):** Low `#46D39A` · Medium `#F4B740` · High `#F97316` · Critical `#FF6B6B` · Unknown `#95A3B3`
+- **Charts:** Recharts in both React apps — fleet risk donut, score timeline, log level bars, classifier scores, MITRE technique frequency
+- **Favicon:** shared SVG shield (`frontend/public/aegis-icon.svg`) wired into both web apps
 
 ## Validation Command
 
