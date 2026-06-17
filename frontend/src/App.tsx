@@ -4,9 +4,12 @@ import {
   Bot,
   Brain,
   CheckCircle2,
+  ExternalLink,
+  FileSearch,
   Gauge,
   Loader2,
   MessageSquare,
+  Package,
   RefreshCcw,
   Search,
   Shield,
@@ -28,7 +31,7 @@ import type {
   TimelineItem
 } from "./types";
 
-type Tab = "overview" | "devices" | "logs" | "ai" | "chat";
+type Tab = "overview" | "devices" | "logs" | "ai" | "chat" | "apk";
 
 const savedToken = localStorage.getItem("aegis_analyst_token") || "sample-token";
 const savedApiUrl = localStorage.getItem("aegis_api_url") || "http://127.0.0.1:8080/api/v1";
@@ -114,6 +117,7 @@ export function App() {
         <NavButton active={tab === "logs"} icon={<Terminal />} label="Logs" onClick={() => setTab("logs")} />
         <NavButton active={tab === "ai"} icon={<Brain />} label="AI Center" onClick={() => setTab("ai")} />
         <NavButton active={tab === "chat"} icon={<MessageSquare />} label="Shieldy Chat" onClick={() => setTab("chat")} />
+        <NavButton active={tab === "apk"} icon={<Package />} label="APK Analyzer" onClick={() => setTab("apk")} />
         <div className="connection-box">
           <label>API URL</label>
           <input value={apiUrl} onChange={(event) => setApiUrl(event.target.value)} />
@@ -178,6 +182,7 @@ export function App() {
         {tab === "logs" && <LogsPanel logs={logs} loading={loading} />}
         {tab === "ai" && <AiCenter runs={aiRuns} payload={payload} loading={loading} />}
         {tab === "chat" && <ChatPanel api={api} contextPayloadId={payload?.payload_id} />}
+        {tab === "apk" && <ApkStudioPanel />}
       </main>
     </div>
   );
@@ -837,6 +842,96 @@ function ChatPanel({ api, contextPayloadId }: { api: AegisApi; contextPayloadId?
   );
 }
 
+// ─── APK Studio Panel ────────────────────────────────────────────────────────
+
+const APK_STUDIO_URL = "http://localhost:8000";
+
+function ApkStudioPanel() {
+  const [reachable, setReachable] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch(`${APK_STUDIO_URL}/health`, { signal: controller.signal, mode: "no-cors" })
+      .then(() => setReachable(true))
+      .catch(() => setReachable(false));
+    return () => controller.abort();
+  }, []);
+
+  return (
+    <section className="split-grid">
+      <div className="panel">
+        <PanelTitle icon={<Package />} title="APK Analyzer — AEGIS APK Studio" />
+        <p style={{ marginBottom: 16, lineHeight: 1.6 }}>
+          AEGIS APK Studio is the companion APK analysis service running on{" "}
+          <code>{APK_STUDIO_URL}</code>. It performs static analysis, dynamic sandbox
+          execution, MITRE ATT&amp;CK mapping, and AI-fused risk scoring on uploaded APK files —
+          complementing the device-posture telemetry collected by this console.
+        </p>
+
+        <div className="detail-grid" style={{ marginBottom: 20 }}>
+          <span>Status</span>
+          <b style={{ color: reachable === null ? "var(--c-text-2)" : reachable ? "var(--c-success, #4ade80)" : "var(--c-danger)" }}>
+            {reachable === null ? "Checking…" : reachable ? "Running" : "Not reachable"}
+          </b>
+          <span>URL</span><b>{APK_STUDIO_URL}</b>
+          <span>Port</span><b>8000</b>
+          <span>API</span><b>{APK_STUDIO_URL}/docs</b>
+        </div>
+
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <a
+            href={APK_STUDIO_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="primary-action"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
+          >
+            <ExternalLink size={16} />
+            Open APK Analyzer
+          </a>
+          <a
+            href={`${APK_STUDIO_URL}/docs`}
+            target="_blank"
+            rel="noreferrer"
+            className="primary-action"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
+          >
+            <FileSearch size={16} />
+            API Docs
+          </a>
+        </div>
+
+        {reachable === false && (
+          <div className="alert" style={{ marginTop: 16 }}>
+            APK Studio is not running. Start it with:{" "}
+            <code>.\tools\start_local_mvp.ps1 -StartApkStudio</code>
+            , or launch it manually from the <code>apk-studio/</code> directory.
+          </div>
+        )}
+      </div>
+
+      <div className="panel">
+        <PanelTitle icon={<FileSearch />} title="Capabilities" />
+        <div className="run-table">
+          {[
+            ["Static Analysis", "DEX disassembly, manifest, permissions, strings"],
+            ["Dynamic Sandbox", "Emulator-based runtime tracing via ADB"],
+            ["MITRE ATT&CK", "Technique tagging (Mobile sub-matrix)"],
+            ["AI Risk Score", "Ollama-backed evidence fusion (shared instance)"],
+            ["Reports", "HTML + PDF report generation per APK"],
+            ["Eval Metrics", "Precision / recall across classifier pipeline"],
+          ].map(([name, detail]) => (
+            <article key={name}>
+              <span>{name}</span>
+              <small>{detail}</small>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Shared components ───────────────────────────────────────────────────────
 
 function RunTable({ runs }: { runs: AIModelRun[] }) {
@@ -920,7 +1015,8 @@ function titleForTab(tab: Tab) {
     devices: "Device Investigation",
     logs: "Logs Analyzer",
     ai: "AI Center",
-    chat: "Shieldy Chat"
+    chat: "Shieldy Chat",
+    apk: "APK Analyzer"
   }[tab];
 }
 

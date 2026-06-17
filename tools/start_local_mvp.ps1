@@ -22,9 +22,11 @@ param(
     [string]$ApiHost         = "0.0.0.0",
     [int]$ApiPort            = 8080,
     [int]$UiPort             = 5173,
+    [int]$ApkPort            = 8000,
     [string]$LocalLlmProvider = "ollama",
     [string]$OpenRouterApiKey = "",
-    [switch]$UseStreamlit
+    [switch]$UseStreamlit,
+    [switch]$StartApkStudio
 )
 
 $ErrorActionPreference = "Stop"
@@ -76,9 +78,9 @@ if (-not $pyExe) {
 
 # ─── 2. Kill existing listeners ──────────────────────────────────────────────
 
-Write-Step "Killing existing listeners on ports $ApiPort / $UiPort / 8501"
+Write-Step "Killing existing listeners on ports $ApiPort / $UiPort / $ApkPort / 8501"
 
-$ports = @($ApiPort, $UiPort, 8501)
+$ports = @($ApiPort, $UiPort, $ApkPort, 8501)
 $existingPids = Get-NetTCPConnection -LocalPort $ports -ErrorAction SilentlyContinue |
     Select-Object -ExpandProperty OwningProcess -Unique
 
@@ -291,6 +293,51 @@ if ($UseStreamlit) {
     }
 }
 
+# ─── 9b. Start APK Studio backend (optional) ────────────────────────────────
+
+$apkStudioDir = Join-Path $repoRoot "apk-studio"
+$apkLogFile   = Join-Path $repoRoot "apk_studio.log"
+
+if ($StartApkStudio) {
+    if (-not (Test-Path $apkStudioDir)) {
+        Write-Warn "apk-studio/ not found — skipping APK Studio. Clone it first:"
+        Write-Warn "  git clone <APK_STUDIO_REPO_URL> apk-studio"
+    } else {
+        Write-Step "Starting APK Studio backend on port $ApkPort"
+
+        $apkVenvPy = Join-Path $apkStudioDir ".venv\Scripts\python.exe"
+        if (-not (Test-Path $apkVenvPy)) {
+            Write-Warn "APK Studio venv not found. Creating..."
+            if ($pyExe -eq "py") {
+                & py "-$pyVersion" -m venv (Join-Path $apkStudioDir ".venv")
+            } else {
+                & python -m venv (Join-Path $apkStudioDir ".venv")
+            }
+        }
+        $apkReqFile = Join-Path $apkStudioDir "requirements.txt"
+        if (Test-Path $apkReqFile) {
+            & $apkVenvPy -m pip install --quiet -r $apkReqFile
+        }
+
+        "" | Set-Content -Path $apkLogFile -Encoding utf8
+        $apkProc = Start-Process `
+            -FilePath $apkVenvPy `
+            -ArgumentList "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "$ApkPort", "--log-level", "info" `
+            -WorkingDirectory $apkStudioDir `
+            -RedirectStandardOutput $apkLogFile `
+            -RedirectStandardError  $apkLogFile `
+            -PassThru
+
+        Start-Sleep -Seconds 3
+        $apkTcp = Get-NetTCPConnection -LocalPort $ApkPort -ErrorAction SilentlyContinue
+        if ($apkTcp) {
+            Write-Ok "APK Studio listening on $ApkPort (PID $($apkProc.Id))"
+        } else {
+            Write-Warn "APK Studio may still be starting — check http://127.0.0.1:$ApkPort"
+        }
+    }
+}
+
 # ─── 10. Summary ─────────────────────────────────────────────────────────────
 
 Write-Host ""
@@ -305,6 +352,12 @@ Write-Host "  Log file    :  $logFile"
 Write-Host "  LLM provider:  $($env:AEGIS_LOCAL_LLM_PROVIDER)"
 Write-Host "  Analyst tok :  $AnalystToken"
 Write-Host "  Enroll tok  :  $EnrollmentToken"
+if ($StartApkStudio -and (Test-Path $apkStudioDir)) {
+    Write-Host "  APK Studio  :  http://127.0.0.1:$ApkPort" -ForegroundColor Magenta
+    Write-Host "  APK log     :  $apkLogFile"
+} else {
+    Write-Host "  APK Studio  :  (not started — use -StartApkStudio after cloning apk-studio/)" -ForegroundColor DarkGray
+}
 Write-Host ""
 Write-Host "  Android emulator → http://10.0.2.2:$ApiPort" -ForegroundColor Yellow
 Write-Host ""
