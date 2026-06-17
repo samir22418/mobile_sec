@@ -76,6 +76,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         topic=settings.kafka_telemetry_topic,
         process_inline=settings.process_inline,
         play_integrity_service=play_integrity,
+        settings=settings,
     )
 
     app.include_router(router)
@@ -83,4 +84,3 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
 
 app = create_app()
-

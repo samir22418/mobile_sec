@@ -8,7 +8,7 @@
   2. Creates/reuses a venv at backend/.venv (prefers py -3.13, falls back to python).
   3. Installs backend/requirements.txt into the venv.
   4. Launches uvicorn with visible log output (backend_live.log at repo root).
-  5. Polls /health until 200 — fails loudly if the backend doesn't start.
+  5. Polls /health until 200 - fails loudly if the backend doesn't start.
   6. Launches the Vite dashboard (or Streamlit).
 
 .EXAMPLE
@@ -37,14 +37,14 @@ $backendDir = Join-Path $repoRoot "backend"
 $frontendDir = Join-Path $repoRoot "frontend"
 $logFile    = Join-Path $repoRoot "backend_live.log"
 
-# ─── helpers ────────────────────────────────────────────────────────────────
+# --- helpers ----------------------------------------------------------------
 
-function Write-Step { param([string]$msg) Write-Host "`n▶  $msg" -ForegroundColor Cyan }
-function Write-Ok   { param([string]$msg) Write-Host "   ✓ $msg" -ForegroundColor Green }
-function Write-Warn { param([string]$msg) Write-Host "   ⚠ $msg" -ForegroundColor Yellow }
-function Fail       { param([string]$msg) Write-Host "`n✗ $msg" -ForegroundColor Red; exit 1 }
+function Write-Step { param([string]$msg) Write-Host "`n  $msg" -ForegroundColor Cyan }
+function Write-Ok   { param([string]$msg) Write-Host "   [OK] $msg" -ForegroundColor Green }
+function Write-Warn { param([string]$msg) Write-Host "   [!] $msg" -ForegroundColor Yellow }
+function Fail       { param([string]$msg) Write-Host "`n[X] $msg" -ForegroundColor Red; exit 1 }
 
-# ─── 1. Python version check ─────────────────────────────────────────────────
+# --- 1. Python version check -------------------------------------------------
 
 Write-Step "Checking Python toolchain"
 
@@ -64,7 +64,7 @@ foreach ($candidate in @("3.13", "3.12", "3.11")) {
 if (-not $pyExe) {
     $ver = & python --version 2>&1
     if ($LASTEXITCODE -ne 0) {
-        Fail "No suitable Python found. Install Python 3.11–3.13 from python.org."
+        Fail "No suitable Python found. Install Python 3.11-3.13 from python.org."
     }
     $pyExe = "python"
     if ($ver -match "Python (3\.\d+)") {
@@ -76,7 +76,7 @@ if (-not $pyExe) {
     }
 }
 
-# ─── 2. Kill existing listeners ──────────────────────────────────────────────
+# --- 2. Kill existing listeners ----------------------------------------------
 
 Write-Step "Killing existing listeners on ports $ApiPort / $UiPort / $ApkPort / 8501"
 
@@ -92,7 +92,7 @@ foreach ($pid in $existingPids) {
 }
 Start-Sleep -Seconds 1   # brief settle
 
-# ─── 3. Create / reuse venv ──────────────────────────────────────────────────
+# --- 3. Create / reuse venv --------------------------------------------------
 
 Write-Step "Setting up backend/.venv"
 
@@ -112,7 +112,7 @@ if (-not (Test-Path $venvPython)) {
     Write-Ok "Reusing existing venv"
 }
 
-# ─── 4. Install requirements ─────────────────────────────────────────────────
+# --- 4. Install requirements -------------------------------------------------
 
 Write-Step "Installing backend dependencies"
 
@@ -126,7 +126,7 @@ if (-not (Test-Path $reqFile)) {
 if ($LASTEXITCODE -ne 0) { Fail "pip install failed" }
 Write-Ok "Dependencies installed"
 
-# ─── 5. Environment variables ────────────────────────────────────────────────
+# --- 5. Environment variables ------------------------------------------------
 
 $env:AEGIS_ANALYST_TOKENS            = $AnalystToken
 $env:AEGIS_ACCEPTED_ENROLLMENT_TOKENS = $EnrollmentToken
@@ -141,7 +141,7 @@ if ($OpenRouterApiKey) {
     $env:OPENROUTER_API_KEY = $OpenRouterApiKey
 }
 
-# ─── 6. Optionally start Ollama ──────────────────────────────────────────────
+# --- 6. Optionally start Ollama ----------------------------------------------
 
 if ($LocalLlmProvider -eq "ollama") {
     try {
@@ -160,18 +160,21 @@ if ($LocalLlmProvider -eq "ollama") {
     }
 }
 
-# ─── 5b. Run database migrations ────────────────────────────────────────────
+# --- 5b. Run database migrations --------------------------------------------
 
 Write-Step "Running database migrations (alembic upgrade head)"
 
 Push-Location $backendDir
+$prevEAP = $ErrorActionPreference
+$ErrorActionPreference = "Continue"   # alembic logs INFO to stderr; don't let that abort the script
 $upgradeOut  = & $venvPython -m alembic upgrade head 2>&1
 $upgradeExit = $LASTEXITCODE
+$ErrorActionPreference = $prevEAP
 if ($upgradeExit -ne 0) {
     if ($upgradeOut -match "already exists") {
         # Tables were created by create_all before Alembic was introduced.
         # Stamp as 0001 (all tables present) then apply incremental migrations.
-        Write-Warn "Tables exist without Alembic stamp — stamping 0001 and retrying..."
+        Write-Warn "Tables exist without Alembic stamp - stamping 0001 and retrying..."
         & $venvPython -m alembic stamp 0001 | Out-Null
         & $venvPython -m alembic upgrade head | Out-Null
         if ($LASTEXITCODE -ne 0) { Fail "Alembic migration failed after stamp." }
@@ -183,7 +186,7 @@ if ($upgradeExit -ne 0) {
 Pop-Location
 Write-Ok "Database migrations up to date"
 
-# ─── 7. Start uvicorn (logged, not hidden) ───────────────────────────────────
+# --- 7. Start uvicorn (logged, not hidden) -----------------------------------
 
 Write-Step "Starting AEGIS backend on $ApiHost`:$ApiPort"
 
@@ -203,13 +206,13 @@ $uvicornProc = Start-Process `
     -ArgumentList $uvicornArgs `
     -WorkingDirectory $backendDir `
     -RedirectStandardOutput $logFile `
-    -RedirectStandardError  $logFile `
+    -RedirectStandardError  "$logFile.err" `
     -PassThru
 
 if (-not $uvicornProc) { Fail "Failed to launch uvicorn" }
-Write-Ok "uvicorn PID $($uvicornProc.Id) — log: $logFile"
+Write-Ok "uvicorn PID $($uvicornProc.Id) - log: $logFile"
 
-# ─── 8. Poll /health until 200 ───────────────────────────────────────────────
+# --- 8. Poll /health until 200 -----------------------------------------------
 
 Write-Step "Waiting for /health 200 (up to 30s)"
 
@@ -244,7 +247,7 @@ if (-not $healthy) {
     Fail "Backend failed health check. See $logFile"
 }
 
-# ─── 9. Start frontend ───────────────────────────────────────────────────────
+# --- 9. Start frontend -------------------------------------------------------
 
 if ($UseStreamlit) {
     Write-Step "Starting Streamlit dashboard on port 8501"
@@ -265,7 +268,7 @@ if ($UseStreamlit) {
     Write-Step "Starting Vite dashboard on port $UiPort"
 
     if (-not (Test-Path (Join-Path $frontendDir "node_modules"))) {
-        Write-Warn "node_modules not found — running npm install..."
+        Write-Warn "node_modules not found - running npm install..."
         Push-Location $frontendDir
         npm install
         if ($LASTEXITCODE -ne 0) { Fail "npm install failed" }
@@ -289,18 +292,18 @@ if ($UseStreamlit) {
     if ($viteTcp) {
         Write-Ok "Vite listening on $UiPort (PID $($viteProc.Id))"
     } else {
-        Write-Warn "Vite may still be starting — check $UiPort in a moment"
+        Write-Warn "Vite may still be starting - check $UiPort in a moment"
     }
 }
 
-# ─── 9b. Start APK Studio backend (optional) ────────────────────────────────
+# --- 9b. Start APK Studio backend (optional) --------------------------------
 
 $apkStudioDir = Join-Path $repoRoot "apk-studio"
 $apkLogFile   = Join-Path $repoRoot "apk_studio.log"
 
 if ($StartApkStudio) {
     if (-not (Test-Path $apkStudioDir)) {
-        Write-Warn "apk-studio/ not found — skipping APK Studio. Clone it first:"
+        Write-Warn "apk-studio/ not found - skipping APK Studio. Clone it first:"
         Write-Warn "  git clone <APK_STUDIO_REPO_URL> apk-studio"
     } else {
         Write-Step "Starting APK Studio backend on port $ApkPort"
@@ -314,20 +317,23 @@ if ($StartApkStudio) {
                 & python -m venv (Join-Path $apkStudioDir ".venv")
             }
         }
+        $apkBackendDir = Join-Path $apkStudioDir "backend"
         $apkReqFile = Join-Path $apkBackendDir "requirements.txt"
         if (Test-Path $apkReqFile) {
             Write-Ok "Installing APK Studio dependencies..."
-            & $apkVenvPy -m pip install --quiet -r $apkReqFile
+            $prevEAP2 = $ErrorActionPreference
+            $ErrorActionPreference = "Continue"
+            & $apkVenvPy -m pip install --quiet -r $apkReqFile 2>&1 | Out-Null
+            $ErrorActionPreference = $prevEAP2
         }
 
         "" | Set-Content -Path $apkLogFile -Encoding utf8
-        $apkBackendDir = Join-Path $apkStudioDir "backend"
         $apkProc = Start-Process `
             -FilePath $apkVenvPy `
             -ArgumentList "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "$ApkPort", "--log-level", "info" `
             -WorkingDirectory $apkBackendDir `
             -RedirectStandardOutput $apkLogFile `
-            -RedirectStandardError  $apkLogFile `
+            -RedirectStandardError  "$apkLogFile.err" `
             -PassThru
 
         # Poll /api/health up to 15s
@@ -342,17 +348,17 @@ if ($StartApkStudio) {
         if ($apkHealthy) {
             Write-Ok "APK Studio healthy on $ApkPort (PID $($apkProc.Id))"
         } else {
-            Write-Warn "APK Studio may still be starting — check http://127.0.0.1:$ApkPort/api/health"
+            Write-Warn "APK Studio may still be starting - check http://127.0.0.1:$ApkPort/api/health"
         }
     }
 }
 
-# ─── 10. Summary ─────────────────────────────────────────────────────────────
+# --- 10. Summary -------------------------------------------------------------
 
 Write-Host ""
-Write-Host "═══════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "===================================================" -ForegroundColor Cyan
 Write-Host " AEGIS stack is UP" -ForegroundColor Green
-Write-Host "═══════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "===================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Backend API :  http://127.0.0.1:$ApiPort"
 Write-Host "  Dashboard   :  $uiUrl"
@@ -365,8 +371,8 @@ if ($StartApkStudio -and (Test-Path $apkStudioDir)) {
     Write-Host "  APK Studio  :  http://127.0.0.1:$ApkPort" -ForegroundColor Magenta
     Write-Host "  APK log     :  $apkLogFile"
 } else {
-    Write-Host "  APK Studio  :  (not started — use -StartApkStudio after cloning apk-studio/)" -ForegroundColor DarkGray
+    Write-Host "  APK Studio  :  (not started - use -StartApkStudio after cloning apk-studio/)" -ForegroundColor DarkGray
 }
 Write-Host ""
-Write-Host "  Android emulator → http://10.0.2.2:$ApiPort" -ForegroundColor Yellow
+Write-Host "  Android emulator -> http://10.0.2.2:$ApiPort" -ForegroundColor Yellow
 Write-Host ""

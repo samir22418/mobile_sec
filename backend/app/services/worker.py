@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.ai.analyzer import AIAnalysisService
+from app.config import Settings
 from app.models import DeviceReport, TelemetryPayload
 from app.risk.scorer import RiskScoringService
 from app.services.normalization import NormalizationService
@@ -24,12 +25,13 @@ class TelemetryWorker:
         risk_scorer: RiskScoringService | None = None,
         ai_service: AIAnalysisService | None = None,
         play_integrity_service: PlayIntegrityService | None = None,
+        settings: Settings | None = None,
     ) -> None:
         self.session_factory = session_factory
         self.raw_store = raw_store
         self.normalizer = normalizer or NormalizationService()
         self.risk_scorer = risk_scorer or RiskScoringService()
-        self.ai_service = ai_service or AIAnalysisService()
+        self.ai_service = ai_service or AIAnalysisService(settings=settings)
         self._play_integrity = play_integrity_service or PlayIntegrityService("", "")
 
     def process_one(self, payload_id: str) -> None:

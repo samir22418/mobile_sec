@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.config import Settings
 from app.models import TelemetryPayload
 from app.services.play_integrity import PlayIntegrityService
 from app.services.raw_store import RawPayloadStore
@@ -18,6 +19,7 @@ class IngestionService:
         topic: str = "telemetry_events",
         process_inline: bool = False,
         play_integrity_service: PlayIntegrityService | None = None,
+        settings: Settings | None = None,
     ) -> None:
         self.raw_store = raw_store
         self.session_factory = session_factory
@@ -25,6 +27,7 @@ class IngestionService:
         self.topic = topic
         self.process_inline = process_inline
         self._play_integrity = play_integrity_service
+        self.settings = settings
 
     def ingest(self, session: Session, payload: dict) -> tuple[TelemetryPayload, bool]:
         payload_id = payload["payload_id"]
@@ -59,6 +62,7 @@ class IngestionService:
                 self.session_factory,
                 self.raw_store,
                 play_integrity_service=self._play_integrity,
+                settings=self.settings,
             ).process_one(payload_id)
             session.refresh(record)
         elif self.producer:
