@@ -64,12 +64,11 @@ class LocalAnalyzerProvider(Protocol):
 
 
 class ResilientLocalAnalyzerProvider:
-    provider_name = "ollama_with_stub_fallback"
-
     def __init__(self, primary: LocalAnalyzerProvider, fallback: LocalAnalyzerProvider | None = None) -> None:
         self.primary = primary
         self.fallback = fallback or StubLocalAnalyzerProvider()
         self.prompt_version = primary.prompt_version
+        self.provider_name = f"{primary.provider_name}_with_stub_fallback"
 
     def model_for_role(self, role: str) -> str:
         return self.primary.model_for_role(role)
@@ -81,7 +80,7 @@ class ResilientLocalAnalyzerProvider:
             return output
         except Exception as error:
             fallback_output = json.loads(self.fallback.analyze(role, evidence_bundle))
-            fallback_output["provider_warning"] = f"Ollama unavailable or invalid for {role}: {error}"
+            fallback_output["provider_warning"] = f"{self.primary.provider_name} unavailable or invalid for {role}: {error}"
             fallback_output["fallback_provider"] = self.fallback.provider_name
             return json.dumps(fallback_output, sort_keys=True)
 

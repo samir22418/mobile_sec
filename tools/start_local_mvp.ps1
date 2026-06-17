@@ -23,7 +23,7 @@ param(
     [int]$ApiPort            = 8080,
     [int]$UiPort             = 5173,
     [int]$ApkPort            = 8000,
-    [string]$LocalLlmProvider = "ollama",
+    [string]$LocalLlmProvider = "openrouter",
     [string]$OpenRouterApiKey = "",
     [switch]$UseStreamlit,
     [switch]$StartApkStudio
@@ -141,9 +141,29 @@ if ($OpenRouterApiKey) {
     $env:OPENROUTER_API_KEY = $OpenRouterApiKey
 }
 
-# --- 6. Optionally start Ollama ----------------------------------------------
+# --- 6. LLM provider setup ---------------------------------------------------
 
-if ($LocalLlmProvider -eq "ollama") {
+if ($LocalLlmProvider -eq "openrouter") {
+    # Key can come from -OpenRouterApiKey param, existing env, or backend/.env file
+    $resolvedKey = $env:OPENROUTER_API_KEY
+    if (-not $resolvedKey) {
+        # Try to read directly from .env so the user gets an early warning
+        $envFile = Join-Path $backendDir ".env"
+        if (Test-Path $envFile) {
+            $envLine = Select-String -Path $envFile -Pattern "^OPENROUTER_API_KEY=(.+)" | Select-Object -First 1
+            if ($envLine -and $envLine.Matches.Groups[1].Value.Trim()) {
+                $resolvedKey = $envLine.Matches.Groups[1].Value.Trim()
+                $env:OPENROUTER_API_KEY = $resolvedKey
+            }
+        }
+    }
+    if ($resolvedKey) {
+        Write-Ok "OpenRouter key loaded (${$resolvedKey.Length} chars) — real AI analysis active"
+    } else {
+        Write-Warn "OPENROUTER_API_KEY not found. AI analysis will run in stub mode."
+        $env:AEGIS_LOCAL_LLM_PROVIDER = "stub"
+    }
+} elseif ($LocalLlmProvider -eq "ollama") {
     try {
         Invoke-RestMethod -Uri "http://127.0.0.1:11434/api/tags" -TimeoutSec 3 | Out-Null
         Write-Ok "Ollama already running"
