@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="g" x1="16" y1="2" x2="16" y2="30" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#64D2FF"/>
+      <stop offset="100%" stop-color="#A78BFA"/>
+    </linearGradient>
+  </defs>
+  <!-- Shield body -->
+  <path d="M16 2L27 6.8V17C27 23 22 27.8 16 29.8C10 27.8 5 23 5 17V6.8Z" fill="#111922"/>
+  <!-- Shield border -->
+  <path d="M16 2L27 6.8V17C27 23 22 27.8 16 29.8C10 27.8 5 23 5 17V6.8Z" fill="none" stroke="url(#g)" stroke-width="1.5"/>
+  <!-- A letterform: two legs + crossbar -->
+  <path d="M16 10L20.5 22H11.5L16 10Z" fill="none" stroke="url(#g)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="13" y1="18.5" x2="19" y2="18.5" stroke="url(#g)" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
