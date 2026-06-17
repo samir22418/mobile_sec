@@ -15,6 +15,7 @@
   .\tools\start_local_mvp.ps1
   .\tools\start_local_mvp.ps1 -AnalystToken "mytoken" -EnrollmentToken "mytoken"
   .\tools\start_local_mvp.ps1 -UseStreamlit
+  .\tools\start_local_mvp.ps1 -SkipApkStudio
 #>
 param(
     [string]$AnalystToken    = "sample-token",
@@ -26,7 +27,7 @@ param(
     [string]$LocalLlmProvider = "openrouter",
     [string]$OpenRouterApiKey = "",
     [switch]$UseStreamlit,
-    [switch]$StartApkStudio
+    [switch]$SkipApkStudio
 )
 
 $ErrorActionPreference = "Stop"
@@ -321,10 +322,9 @@ if ($UseStreamlit) {
 $apkStudioDir = Join-Path $repoRoot "apk-studio"
 $apkLogFile   = Join-Path $repoRoot "apk_studio.log"
 
-if ($StartApkStudio) {
+if (-not $SkipApkStudio) {
     if (-not (Test-Path $apkStudioDir)) {
-        Write-Warn "apk-studio/ not found - skipping APK Studio. Clone it first:"
-        Write-Warn "  git clone <APK_STUDIO_REPO_URL> apk-studio"
+        Write-Warn "apk-studio/ not found - skipping APK Studio (use -SkipApkStudio to suppress this warning)"
     } else {
         Write-Step "Starting APK Studio backend on port $ApkPort"
 
@@ -387,11 +387,11 @@ Write-Host "  Log file    :  $logFile"
 Write-Host "  LLM provider:  $($env:AEGIS_LOCAL_LLM_PROVIDER)"
 Write-Host "  Analyst tok :  $AnalystToken"
 Write-Host "  Enroll tok  :  $EnrollmentToken"
-if ($StartApkStudio -and (Test-Path $apkStudioDir)) {
+if (-not $SkipApkStudio -and (Test-Path $apkStudioDir)) {
     Write-Host "  APK Studio  :  http://127.0.0.1:$ApkPort" -ForegroundColor Magenta
     Write-Host "  APK log     :  $apkLogFile"
 } else {
-    Write-Host "  APK Studio  :  (not started - use -StartApkStudio after cloning apk-studio/)" -ForegroundColor DarkGray
+    Write-Host "  APK Studio  :  (skipped - remove -SkipApkStudio or clone apk-studio/)" -ForegroundColor DarkGray
 }
 Write-Host ""
 Write-Host "  Android emulator -> http://10.0.2.2:$ApiPort" -ForegroundColor Yellow
