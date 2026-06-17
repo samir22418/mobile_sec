@@ -57,7 +57,6 @@ class TelemetryPayloadTest {
             backendUrl = "https://api.aegis.test",
             deviceId = "device-001",
             enrollmentToken = "enrollment-token",
-            cloudProjectNumber = 123L,
         )
         val deviceReport = deviceReport("device-001")
         val appSnapshot = appSnapshot("device-001")
@@ -126,8 +125,6 @@ class TelemetryPayloadTest {
                 testKeysFound = false,
                 superuserApkFound = false,
             ),
-            integrityVerdict = IntegrityVerdict.NOT_CONFIGURED,
-            integrityDetails = "not configured",
             securityPatchDate = "2026-05-01",
             bootloaderState = "green",
         )

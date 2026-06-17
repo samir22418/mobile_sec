@@ -38,6 +38,8 @@ class RiskScoringService:
         verified = device_report.verified_integrity_verdict is not None
 
         match effective_verdict:
+            case None:
+                pass  # No integrity data sent — device not penalized
             case "FAILS":
                 score += 35
                 if verified:

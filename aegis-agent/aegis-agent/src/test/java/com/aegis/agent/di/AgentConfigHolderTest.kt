@@ -53,6 +53,5 @@ class AgentConfigHolderTest {
             enrollmentToken = "token",
             isByodMode = false,
             scanIntervalMin = 60L,
-            cloudProjectNumber = 123L,
         )
 }

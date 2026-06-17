@@ -49,7 +49,7 @@ class DeviceReport(Base):
     su_binary_found: Mapped[bool] = mapped_column(Boolean)
     test_keys_found: Mapped[bool] = mapped_column(Boolean)
     superuser_apk_found: Mapped[bool] = mapped_column(Boolean)
-    integrity_verdict: Mapped[str] = mapped_column(String(64))
+    integrity_verdict: Mapped[str | None] = mapped_column(String(64), nullable=True)
     verified_integrity_verdict: Mapped[str | None] = mapped_column(String(64), nullable=True)
     integrity_nonce: Mapped[str | None] = mapped_column(String(500), nullable=True, index=True)
     security_patch_date: Mapped[str] = mapped_column(String(32))

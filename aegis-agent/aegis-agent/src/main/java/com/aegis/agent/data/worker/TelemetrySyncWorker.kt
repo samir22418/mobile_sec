@@ -52,7 +52,6 @@ class TelemetrySyncWorker @AssistedInject constructor(
             Timber.i(
                 "TelemetrySyncWorker: device scan complete; " +
                     "rooted=${deviceReport.rootDetection.isRooted} " +
-                    "verdict=${deviceReport.integrityVerdict} " +
                     "patch=${deviceReport.securityPatchDate}"
             )
 

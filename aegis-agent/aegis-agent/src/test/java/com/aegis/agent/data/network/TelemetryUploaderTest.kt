@@ -2,7 +2,6 @@ package com.aegis.agent.data.network
 
 import com.aegis.agent.domain.model.AppSnapshot
 import com.aegis.agent.domain.model.DeviceReport
-import com.aegis.agent.domain.model.IntegrityVerdict
 import com.aegis.agent.domain.model.RootDetectionResult
 import com.aegis.agent.domain.model.TelemetryPayload
 import kotlinx.coroutines.test.runTest
@@ -94,8 +93,6 @@ class TelemetryUploaderTest {
                     testKeysFound = false,
                     superuserApkFound = false,
                 ),
-                integrityVerdict = IntegrityVerdict.NOT_CONFIGURED,
-                integrityDetails = "not configured",
                 securityPatchDate = "2026-05-01",
                 bootloaderState = "green",
             ),

@@ -51,7 +51,6 @@
         "device_id",
         "timestamp_epoch_ms",
         "root_detection",
-        "integrity_verdict",
         "security_patch_date",
         "bootloader_state"
       ],

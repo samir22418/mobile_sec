@@ -6,7 +6,6 @@ import com.aegis.agent.data.persistence.ConfigRepository
 import com.aegis.agent.data.persistence.ScanResultRepository
 import com.aegis.agent.domain.model.AppSnapshot
 import com.aegis.agent.domain.model.DeviceReport
-import com.aegis.agent.domain.model.IntegrityVerdict
 import com.aegis.agent.domain.model.ImportantLog
 import com.aegis.agent.domain.model.LogLevel
 import com.aegis.agent.domain.model.MatchedRule
@@ -90,10 +89,6 @@ class UploadTelemetryUseCaseTest {
             uploadedAtEpochMs = null,
             deviceId = "device-001",
             isRooted = false,
-            integrityVerdict = IntegrityVerdict.NOT_CONFIGURED,
-            integrityDetails = "not configured",
-            integrityErrorCode = null,
-            integrityTokenHashSha256 = null,
             securityPatchDate = "2026-05-01",
             bootloaderState = "green",
             totalAppCount = 0,
@@ -115,8 +110,6 @@ class UploadTelemetryUseCaseTest {
                 testKeysFound = false,
                 superuserApkFound = false,
             ),
-            integrityVerdict = IntegrityVerdict.NOT_CONFIGURED,
-            integrityDetails = "not configured",
             securityPatchDate = "2026-05-01",
             bootloaderState = "green",
         )

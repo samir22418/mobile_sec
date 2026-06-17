@@ -20,10 +20,4 @@ data class AgentConfig(
     val enrollmentToken: String,
     val isByodMode: Boolean = false,
     val scanIntervalMin: Long = 60L,
-    /**
-     * Google Cloud project number linked to your app in the Play Console.
-     * Required by the Play Integrity API ([IntegrityApiClient]).
-     * Obtain from: Play Console → Setup → API Services.
-     */
-    val cloudProjectNumber: Long = 0L,
 )

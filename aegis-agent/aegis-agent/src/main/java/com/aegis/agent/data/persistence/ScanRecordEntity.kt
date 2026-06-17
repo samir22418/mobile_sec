@@ -3,7 +3,6 @@ package com.aegis.agent.data.persistence
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.aegis.agent.domain.model.IntegrityVerdict
 import com.aegis.agent.domain.model.ScanRecord
 import com.aegis.agent.domain.model.ScanStatus
 import com.aegis.agent.domain.model.ScanTrigger
@@ -53,18 +52,6 @@ data class ScanRecordEntity(
     @ColumnInfo(name = "is_rooted")
     val isRooted: Boolean? = null,
 
-    @ColumnInfo(name = "integrity_verdict")
-    val integrityVerdict: String? = null,
-
-    @ColumnInfo(name = "integrity_details")
-    val integrityDetails: String? = null,
-
-    @ColumnInfo(name = "integrity_error_code")
-    val integrityErrorCode: Int? = null,
-
-    @ColumnInfo(name = "integrity_token_hash_sha256")
-    val integrityTokenHashSha256: String? = null,
-
     @ColumnInfo(name = "security_patch_date")
     val securityPatchDate: String? = null,
 
@@ -110,10 +97,6 @@ data class ScanRecordEntity(
         uploadedAtEpochMs = uploadedAtEpochMs,
         deviceId = deviceId,
         isRooted = isRooted,
-        integrityVerdict = integrityVerdict?.let { runCatching { IntegrityVerdict.valueOf(it) }.getOrNull() },
-        integrityDetails = integrityDetails,
-        integrityErrorCode = integrityErrorCode,
-        integrityTokenHashSha256 = integrityTokenHashSha256,
         securityPatchDate = securityPatchDate,
         bootloaderState = bootloaderState,
         totalAppCount = totalAppCount,

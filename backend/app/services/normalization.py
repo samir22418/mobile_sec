@@ -39,7 +39,7 @@ class NormalizationService:
                 su_binary_found=root_flags[0],
                 test_keys_found=root_flags[1],
                 superuser_apk_found=root_flags[2],
-                integrity_verdict=report["integrity_verdict"],
+                integrity_verdict=report.get("integrity_verdict"),
                 integrity_nonce=report.get("integrity_nonce"),
                 security_patch_date=report["security_patch_date"],
                 security_patch_age_days=patch_age_days(report.get("security_patch_date")),

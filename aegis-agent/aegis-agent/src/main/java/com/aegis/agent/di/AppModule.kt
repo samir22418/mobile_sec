@@ -34,8 +34,7 @@ private val Context.appInventoryDataStore: DataStore<Preferences> by preferences
  *
  * ## isByodMode binding
  * The BYOD flag is read from [AgentConfigHolder] or encrypted persisted config,
- * mirroring the same pattern used by [ScannerModule] for deviceId and
- * cloudProjectNumber.
+ * mirroring the same pattern used by [ScannerModule] for deviceId.
  */
 @Module
 @InstallIn(SingletonComponent::class)

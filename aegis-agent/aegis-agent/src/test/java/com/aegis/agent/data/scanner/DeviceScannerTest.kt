@@ -2,10 +2,7 @@ package com.aegis.agent.data.scanner
 
 import android.content.Context
 import com.aegis.agent.domain.model.DeviceReport
-import com.aegis.agent.domain.model.IntegrityCheckResult
-import com.aegis.agent.domain.model.IntegrityVerdict
 import com.aegis.agent.domain.model.RootDetectionResult
-import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
@@ -29,7 +26,6 @@ class DeviceScannerTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val mockContext: Context = mockk(relaxed = true)
-    private val mockIntegrityClient: IntegrityApiClient = mockk()
 
     private lateinit var rootDetector: RootDetector
     private lateinit var scanner: DeviceScanner
@@ -41,9 +37,7 @@ class DeviceScannerTest {
             DeviceScanner(
                 context = mockContext,
                 rootDetector = rootDetector,
-                integrityApiClient = mockIntegrityClient,
                 deviceId = "test-device-001",
-                mainDispatcher = testDispatcher,
             ),
             recordPrivateCalls = true,
         )
@@ -141,46 +135,6 @@ class DeviceScannerTest {
     }
 
     @Nested
-    @DisplayName("IntegrityApiClient decoded payload mapping")
-    inner class IntegrityApiClientMappingTests {
-
-        private lateinit var client: IntegrityApiClient
-
-        @BeforeEach
-        fun setUp() {
-            client = IntegrityApiClient(context = mockContext, cloudProjectNumber = 0L)
-        }
-
-        @Test
-        @DisplayName("mapDecodedPayloadToVerdict returns MEETS_STRONG_INTEGRITY")
-        fun `mapDecodedPayloadToVerdict returns MEETS_STRONG_INTEGRITY`() {
-            val verdict = client.mapDecodedPayloadToVerdict(
-                """{"deviceIntegrity":{"deviceRecognitionVerdict":["MEETS_STRONG_INTEGRITY"]}}"""
-            )
-
-            assertEquals(IntegrityVerdict.MEETS_STRONG_INTEGRITY, verdict)
-        }
-
-        @Test
-        @DisplayName("mapDecodedPayloadToVerdict returns MEETS_DEVICE_INTEGRITY")
-        fun `mapDecodedPayloadToVerdict returns MEETS_DEVICE_INTEGRITY`() {
-            val verdict = client.mapDecodedPayloadToVerdict(
-                """{"deviceIntegrity":{"deviceRecognitionVerdict":["MEETS_DEVICE_INTEGRITY"]}}"""
-            )
-
-            assertEquals(IntegrityVerdict.MEETS_DEVICE_INTEGRITY, verdict)
-        }
-
-        @Test
-        @DisplayName("mapDecodedPayloadToVerdict returns FAILS for no recognized labels")
-        fun `mapDecodedPayloadToVerdict returns FAILS for no labels`() {
-            val verdict = client.mapDecodedPayloadToVerdict("""{"deviceIntegrity":{}}""")
-
-            assertEquals(IntegrityVerdict.FAILS, verdict)
-        }
-    }
-
-    @Nested
     @DisplayName("DeviceScanner full scan")
     inner class DeviceScannerScanTests {
 
@@ -193,42 +147,14 @@ class DeviceScannerTest {
         @Test
         @DisplayName("scan() returns DeviceReport with correct deviceId")
         fun `scan returns DeviceReport with correct deviceId`() = runTest(testDispatcher) {
-            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns integrity(IntegrityVerdict.MEETS_DEVICE_INTEGRITY)
-
             val report: DeviceReport = scanner.scan()
 
             assertEquals("test-device-001", report.deviceId)
         }
 
         @Test
-        @DisplayName("scan() returns requested integrity verdict")
-        fun `scan returns integrity verdict`() = runTest(testDispatcher) {
-            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns integrity(IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION)
-
-            val report = scanner.scan()
-
-            assertEquals(IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION, report.integrityVerdict)
-            assertEquals("test integrity detail", report.integrityDetails)
-        }
-
-        @Test
-        @DisplayName("scan() returns API_ERROR when Play Integrity API throws")
-        fun `scan returns API_ERROR when integrity client throws`() = runTest(testDispatcher) {
-            coEvery {
-                mockIntegrityClient.queryIntegrity(any())
-            } throws RuntimeException("Network unavailable")
-
-            val report = scanner.scan()
-
-            assertEquals(IntegrityVerdict.API_ERROR, report.integrityVerdict)
-            assertTrue(report.integrityDetails?.contains("Network unavailable") == true)
-        }
-
-        @Test
         @DisplayName("scan() populates security patch date")
         fun `scan populates securityPatchDate`() = runTest(testDispatcher) {
-            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns integrity(IntegrityVerdict.MEETS_BASIC_INTEGRITY)
-
             val report = scanner.scan()
 
             assertEquals("2024-03-05", report.securityPatchDate)
@@ -237,8 +163,6 @@ class DeviceScannerTest {
         @Test
         @DisplayName("scan() populates bootloader state")
         fun `scan populates bootloaderState`() = runTest(testDispatcher) {
-            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns integrity(IntegrityVerdict.MEETS_BASIC_INTEGRITY)
-
             val report = scanner.scan()
 
             assertEquals("green", report.bootloaderState)
@@ -247,8 +171,6 @@ class DeviceScannerTest {
         @Test
         @DisplayName("scan() returns non-zero timestampEpochMs")
         fun `scan returns positive timestamp`() = runTest(testDispatcher) {
-            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns integrity(IntegrityVerdict.MEETS_STRONG_INTEGRITY)
-
             val report = scanner.scan()
 
             assertTrue(report.timestampEpochMs > 0L)
@@ -257,8 +179,6 @@ class DeviceScannerTest {
         @Test
         @DisplayName("scan() returns rootDetection with all false on clean JVM host")
         fun `scan returns rootDetection all false on JVM host`() = runTest(testDispatcher) {
-            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns integrity(IntegrityVerdict.MEETS_STRONG_INTEGRITY)
-
             val report = scanner.scan()
 
             assertFalse(report.rootDetection.isRooted)
@@ -269,14 +189,10 @@ class DeviceScannerTest {
         @Test
         @DisplayName("scan() DeviceReport is serializable to non-empty JSON string")
         fun `scan result is serializable`() = runTest(testDispatcher) {
-            coEvery { mockIntegrityClient.queryIntegrity(any()) } returns integrity(IntegrityVerdict.REQUIRES_BACKEND_VERIFICATION)
-
             val json = scanner.scanToJson()
 
             assertNotNull(json)
             assertTrue(json.contains("device_id"))
-            assertTrue(json.contains("integrity_verdict"))
-            assertTrue(json.contains("integrity_details"))
             assertTrue(json.contains("security_patch_date"))
             assertTrue(json.contains("bootloader_state"))
         }
@@ -292,7 +208,6 @@ class DeviceScannerTest {
             val plainScanner = DeviceScanner(
                 context = mockContext,
                 rootDetector = RootDetector(),
-                integrityApiClient = mockIntegrityClient,
                 deviceId = "test",
             )
 
@@ -313,7 +228,6 @@ class DeviceScannerTest {
             val plainScanner = DeviceScanner(
                 context = mockContext,
                 rootDetector = RootDetector(),
-                integrityApiClient = mockIntegrityClient,
                 deviceId = "test",
             )
 
@@ -329,7 +243,6 @@ class DeviceScannerTest {
             val plainScanner = DeviceScanner(
                 context = mockContext,
                 rootDetector = RootDetector(),
-                integrityApiClient = mockIntegrityClient,
                 deviceId = "test",
             )
 
@@ -338,10 +251,4 @@ class DeviceScannerTest {
             assertEquals("unknown", result)
         }
     }
-
-    private fun integrity(verdict: IntegrityVerdict): IntegrityCheckResult =
-        IntegrityCheckResult(
-            verdict = verdict,
-            details = "test integrity detail",
-        )
 }

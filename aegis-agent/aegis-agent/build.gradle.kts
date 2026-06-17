@@ -98,9 +98,6 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.okhttp.tls) // Certificate pinning utilities
 
-    // Google Play Integrity API — device attestation
-    implementation(libs.play.integrity)
-
     // Logging
     implementation(libs.timber)
 
