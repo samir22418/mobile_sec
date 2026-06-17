@@ -42,3 +42,8 @@ anas/
 backend/_run_real.py
 backend/prove_ai.py
 backend/verify_chat.py
+
+# APK Studio — cloned subproject, not tracked here
+apk-studio/*
+!apk-studio/.gitkeep
+apk_studio*.log

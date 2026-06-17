@@ -314,26 +314,35 @@ if ($StartApkStudio) {
                 & python -m venv (Join-Path $apkStudioDir ".venv")
             }
         }
-        $apkReqFile = Join-Path $apkStudioDir "requirements.txt"
+        $apkReqFile = Join-Path $apkBackendDir "requirements.txt"
         if (Test-Path $apkReqFile) {
+            Write-Ok "Installing APK Studio dependencies..."
             & $apkVenvPy -m pip install --quiet -r $apkReqFile
         }
 
         "" | Set-Content -Path $apkLogFile -Encoding utf8
+        $apkBackendDir = Join-Path $apkStudioDir "backend"
         $apkProc = Start-Process `
             -FilePath $apkVenvPy `
             -ArgumentList "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "$ApkPort", "--log-level", "info" `
-            -WorkingDirectory $apkStudioDir `
+            -WorkingDirectory $apkBackendDir `
             -RedirectStandardOutput $apkLogFile `
             -RedirectStandardError  $apkLogFile `
             -PassThru
 
-        Start-Sleep -Seconds 3
-        $apkTcp = Get-NetTCPConnection -LocalPort $ApkPort -ErrorAction SilentlyContinue
-        if ($apkTcp) {
-            Write-Ok "APK Studio listening on $ApkPort (PID $($apkProc.Id))"
+        # Poll /api/health up to 15s
+        $apkHealthy = $false
+        for ($j = 1; $j -le 15; $j++) {
+            Start-Sleep -Seconds 1
+            try {
+                $resp = Invoke-WebRequest -Uri "http://127.0.0.1:$ApkPort/api/health" -TimeoutSec 2 -ErrorAction Stop
+                if ($resp.StatusCode -eq 200) { $apkHealthy = $true; break }
+            } catch {}
+        }
+        if ($apkHealthy) {
+            Write-Ok "APK Studio healthy on $ApkPort (PID $($apkProc.Id))"
         } else {
-            Write-Warn "APK Studio may still be starting — check http://127.0.0.1:$ApkPort"
+            Write-Warn "APK Studio may still be starting — check http://127.0.0.1:$ApkPort/api/health"
         }
     }
 }

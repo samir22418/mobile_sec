@@ -851,7 +851,7 @@ function ApkStudioPanel() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(`${APK_STUDIO_URL}/health`, { signal: controller.signal, mode: "no-cors" })
+    fetch(`${APK_STUDIO_URL}/api/health`, { signal: controller.signal, mode: "no-cors" })
       .then(() => setReachable(true))
       .catch(() => setReachable(false));
     return () => controller.abort();
@@ -875,6 +875,7 @@ function ApkStudioPanel() {
           </b>
           <span>URL</span><b>{APK_STUDIO_URL}</b>
           <span>Port</span><b>8000</b>
+          <span>Health</span><b>{APK_STUDIO_URL}/api/health</b>
           <span>API</span><b>{APK_STUDIO_URL}/docs</b>
         </div>
 
