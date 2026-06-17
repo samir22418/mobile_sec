@@ -440,7 +440,7 @@ function PayloadPanel({ payload, loading }: { payload: PayloadDetail | null; loa
       )}
       {!payload.risk && (
         <div className="risk-hero">
-          <span className="risk-badge low">Pending</span>
+          <span className="risk-badge risk-low">Pending</span>
           <p>Risk analysis in progress.</p>
         </div>
       )}
@@ -978,7 +978,7 @@ function PanelTitle({ icon, title }: { icon: ReactNode; title: string }) {
 
 function RiskBadge({ label, score }: { label: string; score: number }) {
   const tone = score >= 80 ? "critical" : score >= 50 ? "high" : score >= 25 ? "medium" : "low";
-  return <span className={`risk-badge ${tone}`}>{label} {score}</span>;
+  return <span className={`risk-badge risk-${tone}`}>{label} {score}</span>;
 }
 
 // ─── AI pipeline helpers ─────────────────────────────────────────────────────

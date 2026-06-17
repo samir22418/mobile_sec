@@ -386,27 +386,27 @@ input::placeholder {
 
 /* ─── Risk badges ─────────────────────────────────────────────────────────── */
 
-.risk-badge.low {
+.risk-badge.risk-low {
   color: var(--risk-low);
   background: var(--risk-low-surface);
 }
 
-.risk-badge.medium {
+.risk-badge.risk-medium {
   color: var(--risk-medium);
   background: var(--risk-medium-surface);
 }
 
-.risk-badge.high {
+.risk-badge.risk-high {
   color: var(--risk-high);
   background: var(--risk-high-surface);
 }
 
-.risk-badge.critical {
+.risk-badge.risk-critical {
   color: var(--risk-critical);
   background: var(--risk-critical-surface);
 }
 
-.risk-badge.unknown {
+.risk-badge.risk-unknown {
   color: var(--risk-unknown);
   background: var(--risk-unknown-surface);
 }
