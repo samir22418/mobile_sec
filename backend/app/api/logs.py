@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from collections.abc import Sequence
 from datetime import datetime
 
 from fastapi import APIRouter, Depends
@@ -53,34 +54,35 @@ def normalize_filter(value: str | None) -> str | None:
 
 
 def filter_logs(
-    logs: list[ImportantLog],
+    logs: Sequence[ImportantLog],
     *,
     level: str | None = None,
     matched_rule: str | None = None,
     q: str | None = None,
 ) -> list[ImportantLog]:
+    result: list[ImportantLog] = list(logs)
     normalized_level = normalize_filter(level)
     normalized_rule = normalize_filter(matched_rule)
     normalized_query = normalize_filter(q)
 
     if normalized_level:
         wanted_level = normalized_level.upper()
-        logs = [log for log in logs if log.level.upper() == wanted_level]
+        result = [log for log in result if log.level.upper() == wanted_level]
     if normalized_rule:
         wanted_rule = normalized_rule.upper()
-        logs = [log for log in logs if log.matched_rule.upper() == wanted_rule]
+        result = [log for log in result if log.matched_rule.upper() == wanted_rule]
     if normalized_query:
         needle = normalized_query.lower()
-        logs = [
+        result = [
             log
-            for log in logs
+            for log in result
             if needle in log.message_redacted.lower()
             or needle in log.tag.lower()
             or needle in log.device_id.lower()
             or needle in log.payload_id.lower()
             or needle in log.message_hash.lower()
         ]
-    return logs
+    return result
 
 
 def build_logs_analysis(
