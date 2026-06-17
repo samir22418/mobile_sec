@@ -18,18 +18,22 @@ This document covers the end-to-end demo path, expected outputs at each step, an
 ## 1. Local dev stack (one-command startup)
 
 ```powershell
-# From repo root
+# From repo root — AEGIS telemetry backend + dashboard
 .\tools\start_local_mvp.ps1
+
+# With APK Studio on :8000 (requires apk-studio/ cloned):
+.\tools\start_local_mvp.ps1 -StartApkStudio
 ```
 
 What it does:
-1. Kills any stale listeners on ports 8080 / 5173.
+1. Kills any stale listeners on ports 8080 / 5173 / 8000.
 2. Creates / reuses `backend/.venv` with Python 3.11–3.13.
 3. Installs `backend/requirements.txt` into the venv.
 4. Runs Alembic migrations (`alembic upgrade head`).
 5. Starts uvicorn on `0.0.0.0:8080` (visible in the terminal).
 6. Polls `GET http://127.0.0.1:8080/health` until HTTP 200.
 7. Installs frontend deps (`npm ci`) and starts Vite on `127.0.0.1:5173`.
+8. *(With `-StartApkStudio`)* Starts APK Studio uvicorn on `127.0.0.1:8000`.
 
 **Expected terminal output:**
 ```
@@ -64,6 +68,7 @@ Open `http://localhost:5173`.
 | **Logs analysis** | Filtered log signals; redacted if PII present |
 | **AI decisions** | `used_ai_final: true` when score ≥ 40; findings with evidence refs |
 | **Feedback** | Analyst can submit CONFIRM / DISMISS on a risk decision |
+| **APK Analyzer tab** | Shows APK Studio status (green when running on :8000); "Open APK Analyzer" button links to APK Studio dashboard |
 
 ---
 
@@ -153,20 +158,20 @@ curl -H "Authorization: Bearer sample-token" \
 
 ---
 
-## 6. Play Integrity verification
+## 6. APK Analyzer verification
 
-When `AEGIS_GOOGLE_PLAY_INTEGRITY_API_KEY` and `AEGIS_GOOGLE_PLAY_INTEGRITY_PACKAGE_NAME` are set:
+Requires `apk-studio/` cloned and the stack started with `-StartApkStudio`.
 
-1. Android app sends `integrity_token` + `integrity_nonce` in the payload.
-2. Backend calls `googleapis.com/v1/{pkg}:decodeIntegrityToken`.
-3. `device_reports.verified_integrity_verdict` is populated with the server-side result.
-4. Risk scorer uses the verified verdict — a `MEETS_STRONG_INTEGRITY` verdict reduces the integrity-contribution to 0.
+1. Open `http://localhost:5173` → click **APK Analyzer** in the sidebar.
+   - Status indicator should show **Running** (green).
+2. Click **Open APK Analyzer** — opens APK Studio dashboard at `http://localhost:8000`.
+3. Upload a sample APK (e.g. the debug build from `aegis-agent/app/build/outputs/apk/debug/`).
+4. Expected pipeline: static analysis → risk score → MITRE ATT&CK tags → AI-fused report.
+5. Download the HTML/PDF report from the APK Studio dashboard.
 
-To verify:
+**Health check:**
 ```bash
-curl -H "Authorization: Bearer sample-token" \
-     "http://localhost:8080/api/v1/payloads/{payload_id}/report"
-# Look for "verified_integrity_verdict" in the response
+curl http://localhost:8000/health
 ```
 
 ---
@@ -233,7 +238,8 @@ npm run build   # tsc + vite build, no type errors
 
 | Limitation | Notes |
 |---|---|
-| Play Integrity needs real Google credentials | Backend degrades gracefully; `verified_integrity_verdict` stays null; risk scoring uses raw `integrity_verdict` |
+| Play Integrity removed from Android agent | `integrity_verdict` is still accepted by the backend (optional field); backend `PlayIntegrityService` still works when credentials are set (direct API calls, not agent-collected) |
+| APK Studio not bundled | Clone the APK Studio repo into `apk-studio/` and use `-StartApkStudio`; the placeholder directory just marks the integration point |
 | AI analysis skipped below threshold | `risk_score < 40` → no AI run; deterministic score is used |
 | Kafka only in docker-compose | Dev mode (`process_inline=true`) uses SQLite + inline processing |
 | `READ_LOGS` on emulator | Only `SECURITY` priority logs visible without root; log signals may be sparse on AVD |
